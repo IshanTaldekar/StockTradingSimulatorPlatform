@@ -2,7 +2,7 @@
   "name": "stocks_simulator",
   "version": "0.1.0",
   "bin": {
-    "stocks_simulator": "bin/stocks_simulator.js"
+    "stocks_simulator": "backend/bin/stocks_simulator.js"
   },
   "scripts": {
     "build": "tsc",
