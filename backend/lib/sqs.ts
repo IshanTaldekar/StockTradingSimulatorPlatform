@@ -1,4 +1,4 @@
-import {Stack, StackProps} from "aws-cdk-lib";
+import {RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {Construct} from "constructs";
 import {Queue, QueueEncryption} from "aws-cdk-lib/aws-sqs";
 
@@ -13,7 +13,8 @@ export class SqsStack extends Stack {
 
         const newsArticlesQueue = new Queue(this, 'NewsArticlesQueue', {
             queueName: 'news-articles-queue',
-            encryption: QueueEncryption.UNENCRYPTED
+            encryption: QueueEncryption.UNENCRYPTED,
+            removalPolicy: RemovalPolicy.DESTROY
         });
     }
 }

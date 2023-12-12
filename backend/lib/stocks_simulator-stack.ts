@@ -1,4 +1,3 @@
-import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import {IdentityStack} from "./identity";
 import {env} from "./config";
@@ -9,20 +8,21 @@ import {CognitoStack} from "./cognito";
 import {ApiGatewayStack} from "./api-gateway";
 import {DynamoDBStack} from "./dynamo-db";
 import {OpenSearchServiceStack} from "./opensearch-service";
+import {Stack, StackProps} from "aws-cdk-lib";
 
-export class StocksSimulatorStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export class StocksSimulatorStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const identityStack = new IdentityStack(this, 'StocksSimulatorIdentityStack', {
+    const identityStack = new IdentityStack(this, 'IdentityStack', {
       env: env
     });
 
-    const vpcStack = new VpcStack(this, 'StockSimulatorVpcStack', {
+    const vpcStack = new VpcStack(this, 'VpcStack', {
       env: env
     });
 
-    const autoScalingGroupStack = new AutoScalingGroupStack(this, 'StocksSimulatorAutoScalingGroupStack', {
+    const autoScalingGroupStack = new AutoScalingGroupStack(this, 'AutoScalingGroupStack', {
       env: env,
       vpc: vpcStack.vpc,
       ec2ServerRole: identityStack.ec2ServerRole
@@ -30,25 +30,23 @@ export class StocksSimulatorStack extends cdk.Stack {
     autoScalingGroupStack.addDependency(vpcStack);
     autoScalingGroupStack.addDependency(identityStack);
 
-    const loadBalancerStack = new LoadBalancerStack(this, 'StocksSimulatorLoadBalancerStack', {
+    const loadBalancerStack = new LoadBalancerStack(this, 'LoadBalancerStack', {
       env: env,
       vpc: vpcStack.vpc,
       autoScalingGroup: autoScalingGroupStack.autoScalingGroup
     });
-    loadBalancerStack.addDependency(autoScalingGroupStack);
 
-    const cognitoStack = new CognitoStack(this, 'StocksSimulatorCognitoStack', {
+    const cognitoStack = new CognitoStack(this, 'CognitoStack', {
       env: env,
       ec2ServerRole: identityStack.ec2ServerRole
     });
-    cognitoStack.addDependency(identityStack);
 
-    const dynamoDBStack = new DynamoDBStack(this, 'StocksSimulatorDynamoDBStack', {
+    const dynamoDBStack = new DynamoDBStack(this, 'DynamoDBStack', {
       env: env
     });
 
-    const openSearchServiceStack = new OpenSearchServiceStack(this, 'StocksSimulatorOpenSearchServiceStack', {
-      vpc: vpcStack.vpc
+    const openSearchServiceStack = new OpenSearchServiceStack(this, 'OpenSearchServiceStack', {
+      env: env
     });
     openSearchServiceStack.addDependency(vpcStack);
 
