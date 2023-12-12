@@ -70,7 +70,7 @@ export class IdentityStack extends Stack {
             }
         });
 
-        this.newsFetchLatestAndSearchLambdaRole = new Role(this, 'NewsFetchLatestLambdaRole', {
+        this.newsFetchLatestAndSearchLambdaRole = new Role(this, 'NewsFetchLatestAndSearchLambdaRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
             inlinePolicies: {
                 CloudWatchLogsAccess: this.getCloudWatchLogsAccessPolicy(),

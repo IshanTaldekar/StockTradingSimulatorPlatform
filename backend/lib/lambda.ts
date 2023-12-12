@@ -76,7 +76,7 @@ export class LambdaStack extends Stack {
             functionName: 'portfolio-fetch',
             runtime: Runtime.PYTHON_3_10,
             handler: 'portfolio-fetch-lambda.handler',
-            code: Code.fromAsset('backend/assets/portfolio-fetch-lambda-deployment/transactions-sell-lambda-deployment-package.zip'),
+            code: Code.fromAsset('backend/assets/portfolio-fetch-lambda-deployment/portfolio-fetch-lambda-deployment-package.zip'),
             role: props.portfolioFetchLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
         });
