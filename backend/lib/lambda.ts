@@ -30,7 +30,7 @@ export class LambdaStack extends Stack {
         this.marketDataConnectLambda = new Function(this, 'MarketDataConnect', {
             functionName: 'market-data-connect',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'market-data-connect-lambda.handler',
+            handler: 'market_data_connect_lambda.handler',
             code: Code.fromAsset('backend/assets/market-data-connect-lambda-deployment/market-data-connect-lambda-deployment-package.zip'),
             role: props.marketDataConnectLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -39,7 +39,7 @@ export class LambdaStack extends Stack {
         this.marketDataDisconnectLambda = new Function(this, 'MarketDataDisconnect', {
             functionName: 'market-data-disconnect',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'market-data-disconnect-lambda.handler',
+            handler: 'market_data_disconnect_lambda.handler',
             code: Code.fromAsset('backend/assets/market-data-disconnect-lambda-deployment/market-data-disconnect-lambda-deployment-package.zip'),
             role: props.marketDataDisconnectLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -48,7 +48,7 @@ export class LambdaStack extends Stack {
         this.transactionsFetchLambda = new Function(this, 'TransactionsFetch', {
             functionName: 'transactions-fetch',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'transactions-fetch-lambda.handler',
+            handler: 'transactions_fetch_lambda.handler',
             code: Code.fromAsset('backend/assets/transactions-fetch-lambda-deployment/transactions-fetch-lambda-deployment-package.zip'),
             role: props.transactionsFetchLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -57,7 +57,7 @@ export class LambdaStack extends Stack {
         this.transactionsBuyLambda = new Function(this, 'TransactionsBuy', {
             functionName: 'transactions-buy',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'transactions-buy-lambda.handler',
+            handler: 'transactions_buy_lambda.handler',
             code: Code.fromAsset('backend/assets/transactions-buy-lambda-deployment/transactions-buy-lambda-deployment-package.zip'),
             role: props.transactionsBuyLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -66,7 +66,7 @@ export class LambdaStack extends Stack {
         this.transactionsSellLambda = new Function(this, 'TransactionsSell', {
             functionName: 'transactions-sell',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'transactions-sell-lambda.handler',
+            handler: 'transactions_sell_lambda.handler',
             code: Code.fromAsset('backend/assets/transactions-sell-lambda-deployment/transactions-sell-lambda-deployment-package.zip'),
             role: props.transactionsSellLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -75,7 +75,7 @@ export class LambdaStack extends Stack {
         this.portfolioFetchLambda = new Function(this, 'PortfolioFetch', {
             functionName: 'portfolio-fetch',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'portfolio-fetch-lambda.handler',
+            handler: 'portfolio_fetch_lambda.handler',
             code: Code.fromAsset('backend/assets/portfolio-fetch-lambda-deployment/portfolio-fetch-lambda-deployment-package.zip'),
             role: props.portfolioFetchLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -84,7 +84,7 @@ export class LambdaStack extends Stack {
         this.newsFetchLatestLambda = new Function(this, 'NewsFetchLatest', {
             functionName: 'news-fetch-latest',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'news-fetch-latest-lambda.handler',
+            handler: 'news_fetch_latest_lambda.handler',
             code: Code.fromAsset('backend/assets/news-fetch-latest-lambda-deployment/news-fetch-latest-lambda-deployment-package.zip'),
             role: props.newsFetchLatestAndSearchLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
@@ -93,7 +93,7 @@ export class LambdaStack extends Stack {
         this.newsSearchLambda = new Function(this, 'NewsSearchLatest', {
             functionName: 'news-search',
             runtime: Runtime.PYTHON_3_10,
-            handler: 'news-search-lambda.handler',
+            handler: 'news_search_lambda.handler',
             code: Code.fromAsset('backend/assets/news-search-lambda-deployment/news-search-lambda-deployment-package.zip'),
             role: props.newsFetchLatestAndSearchLambdaRole,
             logRetention: RetentionDays.ONE_WEEK

@@ -11,6 +11,7 @@ import {OpenSearchServiceStack} from "./opensearch-service";
 import {Stack, StackProps} from "aws-cdk-lib";
 import {Ec2Stack} from "./ec2";
 import {LambdaStack} from "./lambda";
+import {S3Stack} from "./s3";
 
 export class StocksSimulatorStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -24,6 +25,10 @@ export class StocksSimulatorStack extends Stack {
       env: env
     });
 
+    const s3Stack = new S3Stack(this, 'S3Stack', {
+      env: env
+    });
+
     const autoScalingGroupStack = new AutoScalingGroupStack(this, 'AutoScalingGroupStack', {
       env: env,
       vpc: vpcStack.vpc,
@@ -31,6 +36,7 @@ export class StocksSimulatorStack extends Stack {
     });
     autoScalingGroupStack.addDependency(vpcStack);
     autoScalingGroupStack.addDependency(identityStack);
+    autoScalingGroupStack.addDependency(s3Stack);
 
     const loadBalancerStack = new LoadBalancerStack(this, 'LoadBalancerStack', {
       env: env,

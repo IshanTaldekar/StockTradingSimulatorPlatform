@@ -12,4 +12,4 @@ pip install -r requirements.txt -t ./package
 cd package || exit
 zip -r ../market-data-disconnect-lambda-deployment-package.zip .
 cd ..
-zip market-data-disconnect-lambda-deployment-package.zip market-data-disconnect-lambda.py
+zip market-data-disconnect-lambda-deployment-package.zip market_data_disconnect_lambda.py

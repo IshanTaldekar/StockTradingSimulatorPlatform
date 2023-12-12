@@ -16,7 +16,10 @@ export class IdentityStack extends Stack {
         super(scope, id, props);
 
         this.ec2ServerRole = new Role(this, 'EC2ServerRole', {
-            assumedBy: new ServicePrincipal('ec2.amazonaws.com')
+            assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
+            inlinePolicies: {
+                WebsiteCodeS3BucketAccess: this.getWebsiteCodeS3BucketAccess()
+            }
         });
 
         // TODO: add market data timestream access
@@ -203,6 +206,32 @@ export class IdentityStack extends Stack {
                         )
                     ]
                 })
+            ]
+        });
+    }
+
+    private getWebsiteCodeS3BucketAccess(): PolicyDocument {
+        return new PolicyDocument({
+            statements: [
+                new PolicyStatement({
+                    actions: [
+                        's3:GetObject'
+                    ],
+                    effect: Effect.ALLOW,
+                    resources: [
+                        Arn.format(
+                            {
+                                arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+                                service: 's3',
+                                resource: 'cloud-computing-project-website-code-bucket',
+                                resourceName: '*',
+                                region: '',
+                                account: ''
+                            },
+                            this
+                        )
+                    ]
+                }),
             ]
         });
     }
