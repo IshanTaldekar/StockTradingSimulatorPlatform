@@ -1,11 +1,10 @@
-import {Stack, StackProps} from "aws-cdk-lib";
+import {Arn, ArnFormat, Stack, StackProps} from "aws-cdk-lib";
 import {Construct} from "constructs";
 import {Domain, EngineVersion} from "aws-cdk-lib/aws-opensearchservice";
 import {EbsDeviceVolumeType, Vpc} from "aws-cdk-lib/aws-ec2";
-import {AccountPrincipal, Effect, PolicyDocument, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
+import {AccountPrincipal, ArnPrincipal, Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 
 export interface OpenSearchServiceStackProps extends StackProps {
-    readonly openSearchServiceAccessAccountRole: Role,
     readonly vpc: Vpc,
 }
 
@@ -13,7 +12,7 @@ export class OpenSearchServiceStack extends Stack {
     constructor(scope: Construct, id: string, props: OpenSearchServiceStackProps) {
         super(scope, id, props);
 
-        const opensearchServiceDomain = new Domain(this, 'Restaurants', {
+        const opensearchServiceDomain = new Domain(this, 'NewsSummary', {
             version: EngineVersion.ELASTICSEARCH_6_7,
             nodeToNodeEncryption: true,
             encryptionAtRest: {
@@ -23,7 +22,7 @@ export class OpenSearchServiceStack extends Stack {
                masterUserName: 'master',
             },
             enforceHttps: true,
-            domainName: 'restaurants',
+            domainName: 'news-summary',
             ebs: {
                 volumeSize: 10,
                 volumeType: EbsDeviceVolumeType.GP2
@@ -45,8 +44,30 @@ export class OpenSearchServiceStack extends Stack {
                         'es:indices*'
                     ],
                     effect: Effect.ALLOW,
-                    resources: ['*'],
+                    resources: [
+                        Arn.format(
+                            {
+                                arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+                                service: 'es',
+                                resource: 'domain',
+                                resourceName: 'news-summary/*',
+                            },
+                            this
+                        )
+                    ],
                     principals: [
+                        new ArnPrincipal(
+                            Arn.format(
+                                {
+                                    arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+                                    service: 'iam',
+                                    resource: 'user',
+                                    resourceName: 'ishantaldekar',
+                                    region: ''
+                                },
+                                this
+                            )
+                        ),
                         new AccountPrincipal(props.env?.account)
                     ],
                 })

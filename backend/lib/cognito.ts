@@ -2,12 +2,9 @@ import {Stack, StackProps} from "aws-cdk-lib";
 import {Construct} from "constructs";
 import {AccountRecovery, UserPool, VerificationEmailStyle} from "aws-cdk-lib/aws-cognito";
 import {Role} from "aws-cdk-lib/aws-iam";
-import { IdentityPool } from "@aws-cdk/aws-cognito-identitypool-alpha";
 
 export interface CognitoStackProps extends StackProps {
     readonly ec2ServerRole: Role,
-    readonly identityPoolAuthenticatedRole: Role,
-    readonly identityPoolUnauthenticatedRole: Role,
 }
 
 export class CognitoStack extends Stack {
