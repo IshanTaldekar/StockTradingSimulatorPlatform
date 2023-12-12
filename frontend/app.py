@@ -1,8 +1,7 @@
 import os
-
+import re
 from cs50 import SQL
-from flask import Flask, render_template
-from flask import flash, jsonify, redirect, request, session
+from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
@@ -14,7 +13,7 @@ from helpers import apology, login_required, lookup, usd
 
 # Configure application
 app = Flask(__name__)
-app.debug = True
+
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
@@ -41,7 +40,7 @@ db = SQL("sqlite:///finance.db")
 
 # Make sure API key is set
 #if not os.environ.get("API_KEY"):
-#    raise RuntimeError("API_KEY not set")
+#   raise RuntimeError("API_KEY not set")
 
 
 @app.route("/")
@@ -252,12 +251,32 @@ def register():
 
     if request.method == 'POST':
         name=request.form.get("username")
+        email = request.form.get("emailid")
+        mobile = request.form.get("mobile")
         hash=generate_password_hash(request.form.get("password"))
         status=True
         # Ensure username was submitted
         if not request.form.get("username"):
             status=False
             msg="Must provide Username"
+
+        elif not email:
+            status = False
+            msg = "Must provide Email"
+
+        elif not mobile:
+            status = False
+            msg = "Must provide Mobile no"
+
+        # Email validation
+        elif not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            status = False
+            msg = "Invalid Email"
+
+        # Mobile number validation
+        elif not re.match(r"^[0-9]{10}$", mobile):
+            status = False
+            msg = "Invalid Mobile No"
 
         # Ensure password was submitted
         elif not request.form.get("password") or not request.form.get("password_confirm"):
@@ -277,7 +296,10 @@ def register():
         # Ensure username exists and password is correct
         # Remember which user has logged in
         if status:
-            rows = db.execute("INSERT INTO users (username,hash) VALUES (:username,:hash)",username=name, hash=hash)
+            #rows = db.execute("INSERT INTO users (username,hash) VALUES (:username,:hash)",username=name, hash=hash)
+            rows=db.execute("INSERT INTO users (username, email, mobile, hash) VALUES (:username, :email, :mobile, :hash)",
+                       username=name, email=email, mobile=mobile, hash=hash)
+            #db.commit()
             flash("Registration is successful")
             session["user_id"] = rows
             return redirect("/")
