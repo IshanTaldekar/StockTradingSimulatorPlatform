@@ -9,6 +9,8 @@ import {ApiGatewayStack} from "./api-gateway";
 import {DynamoDBStack} from "./dynamo-db";
 import {OpenSearchServiceStack} from "./opensearch-service";
 import {Stack, StackProps} from "aws-cdk-lib";
+import {Ec2Stack} from "./ec2";
+import {LambdaStack} from "./lambda";
 
 export class StocksSimulatorStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -50,9 +52,29 @@ export class StocksSimulatorStack extends Stack {
     });
     openSearchServiceStack.addDependency(vpcStack);
 
-    // TODO: needs Lambda deployments
-    // const apiGatewayStack = new ApiGatewayStack(this, 'StockSimulatorAPIGatewayStack', {
-    //
-    // });
+    const lambdaStack = new LambdaStack(this, 'LambdaStack', {
+      env: env,
+      marketDataConnectLambdaRole: identityStack.marketDataConnectLambdaRole,
+      marketDataDisconnectLambdaRole: identityStack.marketDataDisconnectLambdaRole,
+      transactionsFetchLambdaRole: identityStack.transactionsFetchLambdaRole,
+      transactionsBuyLambdaRole: identityStack.transactionsBuyLambdaRole,
+      transactionsSellLambdaRole: identityStack.transactionsSellLambdaRole,
+      portfolioFetchLambdaRole: identityStack.portfolioFetchLambdaRole,
+      newsFetchLatestAndSearchLambdaRole: identityStack.newsFetchLatestAndSearchLambdaRole
+    });
+    lambdaStack.addDependency(identityStack);
+
+    const apiGatewayStack = new ApiGatewayStack(this, 'StockSimulatorAPIGatewayStack', {
+      env: env,
+      marketDataConnectLambdaFunction: lambdaStack.marketDataConnectLambda,
+      marketDataDisconnectLambdaFunction: lambdaStack.marketDataDisconnectLambda,
+      transactionsFetchLambdaFunction: lambdaStack.transactionsFetchLambda,
+      transactionsBuyLambdaFunction: lambdaStack.transactionsBuyLambda,
+      transactionsSellLambdaFunction: lambdaStack.transactionsSellLambda,
+      portfolioFetchLambdaFunction: lambdaStack.portfolioFetchLambda,
+      newsFetchLatestLambdaFunction: lambdaStack.newsFetchLatestLambda,
+      newsSearchLambdaFunction: lambdaStack.newsSearchLambda
+    });
+    apiGatewayStack.addDependency(lambdaStack);
   }
 }

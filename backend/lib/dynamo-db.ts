@@ -19,17 +19,21 @@ export class DynamoDBStack extends Stack {
         const userTransactionsTable = new TableV2(this, 'UserTransactionsTable', {
             tableName: 'user-transactions',
             partitionKey: {
-                name: 'key',
+                name: 'username',
                 type: AttributeType.STRING
+            },
+            sortKey: {
+                name: 'timestamp-epoch',
+                type: AttributeType.NUMBER
             },
             tableClass: TableClass.STANDARD_INFREQUENT_ACCESS,
             removalPolicy: RemovalPolicy.DESTROY
         });
 
-        const userPotfolioTable = new TableV2(this, 'UserPortfolioTable', {
+        const userPortfolioTable = new TableV2(this, 'UserPortfolioTable', {
             tableName: 'user-portfolios',
             partitionKey: {
-                name: 'key',
+                name: 'username',
                 type: AttributeType.STRING
             },
             tableClass: TableClass.STANDARD_INFREQUENT_ACCESS,

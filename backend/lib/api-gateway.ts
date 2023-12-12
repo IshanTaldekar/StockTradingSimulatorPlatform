@@ -52,7 +52,8 @@ export class ApiGatewayStack extends Stack {
 
     private createTransactionsAccessResources(transactionsEndpoint: Resource, props: APIGatewayStackProps) {
         const transactionsFetchResource = transactionsEndpoint.addResource('fetch');
-        transactionsFetchResource.addMethod('GET', new LambdaIntegration(props.transactionsFetchLambdaFunction));
+        const transactionsFetchUsernameResource = transactionsFetchResource.addResource('{username}');
+        transactionsFetchUsernameResource.addMethod('GET', new LambdaIntegration(props.transactionsFetchLambdaFunction));
 
         const transactionsBuyResource = transactionsEndpoint.addResource('buy');
         transactionsBuyResource.addMethod('POST', new LambdaIntegration(props.transactionsBuyLambdaFunction));
@@ -63,7 +64,12 @@ export class ApiGatewayStack extends Stack {
 
     private createPortfolioAccessResources(portfolioEndpoint: Resource, props: APIGatewayStackProps) {
         const portfolioFetchResource = portfolioEndpoint.addResource('fetch');
+<<<<<<< HEAD
         portfolioFetchResource.addMethod('GET', new LambdaIntegration(props.portfolioFetchLambdaFunction));
+=======
+        const portfolioFetchUsernameResource = portfolioFetchResource.addResource('{user}');
+        portfolioFetchUsernameResource.addMethod('GET', new LambdaIntegration(props.portfolioFetchLambdaFunction));
+>>>>>>> 37d6d69 (build: add infrastructure deployments)
     }
 
     private createNewsAccessResources(newsEndpoint: Resource, props: APIGatewayStackProps) {
@@ -71,6 +77,7 @@ export class ApiGatewayStack extends Stack {
         newsFetchResource.addMethod('GET', new LambdaIntegration(props.newsFetchLatestLambdaFunction));
 
         const newsSearchResource = newsEndpoint.addResource('search');
-        newsSearchResource.addMethod('GET', new LambdaIntegration(props.newsSearchLambdaFunction));
+        const newsSearchKeywordResource = newsSearchResource.addResource('{keyword}');
+        newsSearchKeywordResource.addMethod('GET', new LambdaIntegration(props.newsSearchLambdaFunction));
     }
 }
