@@ -12,6 +12,7 @@ export interface LambdaStackProps extends StackProps {
     readonly transactionsSellLambdaRole: Role,
     readonly portfolioFetchLambdaRole: Role,
     readonly newsFetchLatestAndSearchLambdaRole: Role,
+    readonly newsSummarizerLambdaRole: Role,
 }
 
 export class LambdaStack extends Stack {
@@ -96,6 +97,15 @@ export class LambdaStack extends Stack {
             handler: 'news_search_lambda.handler',
             code: Code.fromAsset('backend/assets/news-search-lambda-deployment/news-search-lambda-deployment-package.zip'),
             role: props.newsFetchLatestAndSearchLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        const newsSummarizerLambda = new Function(this, 'NewsSummarizer', {
+            functionName: 'news-summarizer',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'news_summarizer_sagemaker_lambda.handler',
+            code: Code.fromAsset('backend/assets/news-summarizer-sagemaker-lambda-deployment/news-summarizer-sagemaker-lambda-deployment-package.zip'),
+            role: props.newsSummarizerLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
         });
     }

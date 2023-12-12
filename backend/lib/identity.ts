@@ -11,6 +11,7 @@ export class IdentityStack extends Stack {
     public readonly transactionsSellLambdaRole: Role;
     public readonly portfolioFetchLambdaRole: Role;
     public readonly newsFetchLatestAndSearchLambdaRole: Role;
+    public readonly newsSummarizerLambdaRole: Role;
 
     constructor(scope: Construct, id: string, props: StackProps) {
         super(scope, id, props);
@@ -74,6 +75,14 @@ export class IdentityStack extends Stack {
         });
 
         this.newsFetchLatestAndSearchLambdaRole = new Role(this, 'NewsFetchLatestAndSearchLambdaRole', {
+            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+            inlinePolicies: {
+                CloudWatchLogsAccess: this.getCloudWatchLogsAccessPolicy(),
+                OpenSearchAccess: this.getOpensearchServiceAccessPolicy()
+            }
+        });
+
+        this.newsSummarizerLambdaRole = new Role(this, 'NewsSummarizerLambdaRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
             inlinePolicies: {
                 CloudWatchLogsAccess: this.getCloudWatchLogsAccessPolicy(),

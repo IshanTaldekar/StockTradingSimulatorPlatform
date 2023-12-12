@@ -53,6 +53,13 @@ export class StocksSimulatorStack extends Stack {
       env: env
     });
 
+    // const ec2Stack = new Ec2Stack(this, 'EC2Stack', {
+    //   env: env,
+    //   vpc: vpcStack.vpc,
+    //   ec2ServerRole: identityStack.ec2ServerRole
+    // });
+    // ec2Stack.addDependency(identityStack);
+
     const openSearchServiceStack = new OpenSearchServiceStack(this, 'OpenSearchServiceStack', {
       env: env
     });
@@ -66,7 +73,8 @@ export class StocksSimulatorStack extends Stack {
       transactionsBuyLambdaRole: identityStack.transactionsBuyLambdaRole,
       transactionsSellLambdaRole: identityStack.transactionsSellLambdaRole,
       portfolioFetchLambdaRole: identityStack.portfolioFetchLambdaRole,
-      newsFetchLatestAndSearchLambdaRole: identityStack.newsFetchLatestAndSearchLambdaRole
+      newsFetchLatestAndSearchLambdaRole: identityStack.newsFetchLatestAndSearchLambdaRole,
+      newsSummarizerLambdaRole: identityStack.newsSummarizerLambdaRole
     });
     lambdaStack.addDependency(identityStack);
 

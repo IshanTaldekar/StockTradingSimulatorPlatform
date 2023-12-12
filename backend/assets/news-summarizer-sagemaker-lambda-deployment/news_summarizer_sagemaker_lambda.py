@@ -52,23 +52,22 @@ endpoint_name = 'huggingface-pytorch-inference-2023-12-13-19-20-06-220'
 
 usUri = er.getLocationUri("USA")   
 
-q = QueryArticlesIter(
-    keywords = QueryItems.OR(["Business News"]),
-    minSentiment = 0.4,
-    sourceLocationUri = usUri,
-    dataType = ["news", "blog"])
+def handler(event, context):
+    q = QueryArticlesIter(
+        keywords = QueryItems.OR(["Business News"]),
+        minSentiment = 0.4,
+        sourceLocationUri = usUri,
+        dataType = ["news", "blog"])
 
 
-for art in q.execQuery(er, sortBy = "date", maxItems = 5):
-    news = art["body"]
-    news_url = art["url"]
-    id_news = art['uri']
-    summary = sagemaker_inference(news)
-    save_to_es(news_url, summary, id_news)
-    print(summary)
+    for art in q.execQuery(er, sortBy = "date", maxItems = 5):
+        news = art["body"]
+        news_url = art["url"]
+        id_news = art['uri']
+        summary = sagemaker_inference(news)
+        save_to_es(news_url, summary, id_news)
+        print(summary)
 
-def lambda_handler(event, context):
-    # TODO implement
     return {
         'statusCode': 200,
         'body': json.dumps(summary)
