@@ -146,6 +146,21 @@ def history():
     # redirect user to index page
     return render_template("history.html", transaction=transaction)
 
+@app.route("/news")
+@login_required
+def news():
+    newsum = db.execute("SELECT * FROM 'newsinfo' WHERE user_id = :user",
+                          user=session["user_id"])
+
+    transaction = []
+    for row in trans:
+        #stocks = lookup(row['stock'])
+
+        # create a list with all the info about the transaction and append it to a list of every stock transaction
+        transaction.append(list(['index'],['summary'], ['link']))
+
+    # redirect user to index page
+    return render_template("news.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

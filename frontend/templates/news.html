@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    News
+{% endblock %}
+
+{% block main %}
+<table class="table">
+  <thead class="thead-light">
+    <tr>
+      <th scope="col">Sr.no</th>
+      <th scope="col">News</th>
+      <th scope="col">Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for transactions in transaction %}
+        <tr>
+            <th scope="row">{{ transactions[0] }}</th>
+            <td>{{ transactions[1] }}</td>
+            <td>{{ transactions[2] }}</td>
+            <td>{{ transactions[3] }}</td>
+            <td>{{ transactions[4] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

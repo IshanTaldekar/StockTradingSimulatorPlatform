@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV=$(cygpath "C:\Users\palak\Downloads\palakbpatel-cs50-problems-2020-x-tracks-web-finance\palakbpatel-cs50-problems-2020-x-tracks-web-finance\.venv")
+VIRTUAL_ENV=$(cygpath "C:\GITHUB\StockTradingSimulatorPlatform\frontend\.venv")
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
