@@ -41,7 +41,7 @@ CMD ["systemctl", "daemon-reload", "&&", "systemctl", "start", "frontend", "&&",
 
 
 # Start Gunicorn and Nginx
-CMD /bin/bash -c "gunicorn -b 0.0.0.0:8000 app:app & systemctl restart nginx"
+CMD /bin/bash -c "gunicorn -b 0.0.0.0:8000 app:app &  service nginx restart"
 
 # Expose port 80 and 443
 EXPOSE 80
