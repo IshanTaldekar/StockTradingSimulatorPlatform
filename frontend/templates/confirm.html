@@ -5,15 +5,24 @@
 {% endblock %}
 
 {% block main %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 
-<form action="/confirm" method="post">
-    <div class="form-group">
-        <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text" required>
-    </div>
-    <div class="form-group">
-        <input class="form-control" name="confirmation_code" placeholder="Confirmation_code" type="text" required>
-    </div>
-    <button class="btn btn-primary" type="submit" value="Confirm">Confirm</button>
+<form method="post">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required><br>
+
+    <label for="confirmation_code">Confirmation Code:</label>
+    <input type="text" id="confirmation_code" name="confirmation_code" required><br>
+
+    <input type="submit" value="Confirm">
 </form>
 
 <p>Already confirmed? <a href="/login">Log in here</a>.</p>
