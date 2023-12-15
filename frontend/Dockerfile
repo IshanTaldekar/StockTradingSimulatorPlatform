@@ -14,6 +14,10 @@ RUN apt-get update && \
 # Copy the frontend code to the container
 COPY . /home/ubuntu/frontend
 
+# Convert line endings for entry.sh
+RUN apt-get update && apt-get install dos2unix -y && dos2unix /home/ubuntu/frontend/entry.sh && chmod +x /home/ubuntu/frontend/entry.sh
+
+
 # Create a virtual environment and activate it
 RUN python3 -m venv venv
 RUN /bin/bash -c "source venv/bin/activate"
@@ -39,9 +43,12 @@ COPY frontendservice.service /etc/systemd/system/frontend.service
 # Reload systemd daemon and start frontend service
 CMD ["systemctl", "daemon-reload", "&&", "systemctl", "start", "frontend", "&&", "systemctl", "enable", "frontend"]
 
+# Start Gunicorn and Nginx
+CMD ["bash", "-c", "chmod +x entry.sh && ./entry.sh"]
+
 
 # Start Gunicorn and Nginx
-CMD /bin/bash -c "gunicorn -b 0.0.0.0:8000 app:app &  service nginx restart"
+#CMD /bin/bash -c "gunicorn -b 0.0.0.0:8000 app:app &  service nginx restart"
 
 # Expose port 80 and 443
 EXPOSE 80

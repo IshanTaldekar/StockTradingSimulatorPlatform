@@ -10,6 +10,7 @@ from datetime import datetime
 import boto3
 from jose import jwt, JWTError
 import requests
+import urllib
 from helpers import apology, login_required, lookup, usd
 
 # Configure application
@@ -171,7 +172,7 @@ def buy():
         flash("Bought the stocks!")
         return redirect("/")
     else:
-        return render_template("buy.html")
+        return render_template("buy.html", stock_symbols=["AAPL", "GOOGL", "MSFT", "AMZN", "FB", "TSLA", "NVDA", "NFLX", "INTC", "AMD"])
 
 
 @app.route("/history")
@@ -322,20 +323,47 @@ def changepaswd():
 @login_required
 def quote():
     """Get stock quote."""
-    if request.method == "POST":
+    
+    # Example: Fetch information for 10 stock symbols
+    stock_symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "FB", "TSLA", "NVDA", "NFLX", "INTC", "AMD"]
+    stocks_data = []
 
-        r = lookup(request.form.get("symbol"))
-
-        if not r:
-            return apology("Could not find the stock")
-
-        return render_template("quote.html", stock=r)
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("quote.html")
+    # Iterate through the stock symbols and fetch information
+    for symbol in stock_symbols:
+        stock_info = lookup_yahoo_finance_api(symbol)
+        if stock_info:
+            stocks_data.append(stock_info)
+    print(stocks_data)
+    return render_template("quote.html", stocks=stocks_data)
 
 
+def lookup_yahoo_finance_api(symbol):
+        api_url = f"https://query1.finance.yahoo.com/v1/finance/lookup?query={symbol}&type=equity"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        }
+
+        try:
+            response = requests.get(api_url, headers=headers)
+            response.raise_for_status()  # Raise an exception for bad responses (4xx and 5xx)
+            data = response.json()
+
+            # Extract relevant information from the API response
+            documents = data.get("finance", {}).get("result", [{}])[0].get("documents", [])
+            if documents:
+                result = documents[0]
+                short_name = result.get("shortName") or result.get("longName") or "N/A"
+                stock_info = {
+                    "shortName": short_name,
+                    "symbol": result.get("symbol", "N/A"),
+                    "price": result.get("regularMarketPrice", {}).get("raw", "N/A"),
+                }
+            return stock_info
+        except requests.exceptions.RequestException as e:
+            # Handle exceptions (e.g., network errors)
+            print(f"Error fetching data for {symbol}: {e}")
+            return None
+        
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
