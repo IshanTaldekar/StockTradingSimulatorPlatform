@@ -7,7 +7,7 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
-
+import boto3
 
 from helpers import apology, login_required, lookup, usd
 
@@ -16,6 +16,16 @@ app = Flask(__name__)
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+
+###################
+# AWS Cognito configuration
+AWS_REGION = 'us-east-1'
+COGNITO_USER_POOL_ID = 'us-east-1_5wKHtOZwk'
+COGNITO_CLIENT_ID = '6htsmhkqjfro4u9mt7i2hfjltu'
+
+# AWS Cognito client
+cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
+##############################3
 
 # Ensure responses aren't cached
 @app.after_request
@@ -41,7 +51,6 @@ db = SQL("sqlite:///finance.db")
 # Make sure API key is set
 #if not os.environ.get("API_KEY"):
 #   raise RuntimeError("API_KEY not set")
-
 
 @app.route("/")
 @login_required
@@ -152,12 +161,12 @@ def news():
     newsum = db.execute("SELECT * FROM 'newsinfo' WHERE user_id = :user",
                           user=session["user_id"])
 
-    transaction = []
+    newsinfo = []
     for row in trans:
         #stocks = lookup(row['stock'])
 
         # create a list with all the info about the transaction and append it to a list of every stock transaction
-        transaction.append(list(['index'],['summary'], ['link']))
+        newsinfo.append(list(['index'],['summary'], ['link']))
 
     # redirect user to index page
     return render_template("news.html")
@@ -180,24 +189,39 @@ def login():
         elif not request.form.get("password"):
             return apology("must provide password", 403)
 
-        # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username",
-                          username=request.form.get("username"))
+        # # Query database for username
+        # rows = db.execute("SELECT * FROM users WHERE username = :username",
+        #                   username=request.form.get("username"))
 
-        # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
+        # # Ensure username exists and password is correct
+        # if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        #     return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        # session["user_id"] = rows[0]["id"]
 
-        # Redirect user to home page
-        flash("Logged in successfully!")
-        return redirect("/")
+        try:
+            response = cognito_client.initiate_auth(
+                ClientId=COGNITO_CLIENT_ID,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters={
+                    'USERNAME': request.form.get('username'),
+                    'PASSWORD': request.form.get('password'),
+                }
+            )
+
+            # Extract and return the access token, secret key, and session token
+            session['AccessToken'] = response['AuthenticationResult']['AccessToken']
+
+            # Redirect user to home page
+            flash("Logged in successfully!")
+            return redirect("/")
+
+        except Exception as e:
+            print(e)
 
     # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("login.html")
+    return render_template("login.html")
 
 
 @app.route("/logout")
@@ -264,7 +288,7 @@ def quote():
 def register():
     """Register user"""
 
-    if request.method == 'POST':
+    if request.method == 'POST':        
         name=request.form.get("username")
         email = request.form.get("emailid")
         mobile = request.form.get("mobile")
@@ -302,30 +326,61 @@ def register():
             status=False
             msg="Password confirmation did not match"
 
-
         # insert into database
         uname=db.execute("SELECT username from users where username=:username",username=name)
-        if(uname):
+        print(uname, type(uname))
+        if(len(uname) != 0):
             status=False
             msg="Username already taken"
         # Ensure username exists and password is correct
         # Remember which user has logged in
         if status:
-            #rows = db.execute("INSERT INTO users (username,hash) VALUES (:username,:hash)",username=name, hash=hash)
-            rows=db.execute("INSERT INTO users (username, email, mobile, hash) VALUES (:username, :email, :mobile, :hash)",
-                       username=name, email=email, mobile=mobile, hash=hash)
-            #db.commit()
-            flash("Registration is successful")
-            session["user_id"] = rows
-            return redirect("/")
-        # Redirect user to home page
-        return apology(msg)
+            try: 
+                response = cognito_client.sign_up(
+                    ClientId=COGNITO_CLIENT_ID,
+                    Username=request.form.get('username'),
+                    Password=request.form.get('password'),
+                    UserAttributes=[
+                        {
+                            'Name': 'phone_number',           
+                            'Value': '+1'+request.form.get('mobile')
+                        },
+                        {
+                            'Name': 'email',           
+                            'Value': request.form.get('emailid')
+                        }
+                    ]      
+                )
+                flash("Registration is successful!! Please check your email for confirmation.")
+                return redirect("templates/confirm.html")
+
+            except Exception as e:
+                print(e)
+        else:
+            # Redirect user to home page
+            return apology(msg)
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
 
+@app.route("/confirm", methods=['GET', 'POST'])
+def confirm():
+    if request.method == 'POST':
+        username = request.form['username']
+        confirmation_code = request.form['confirmation_code']
+        try:
+            cognito_client.confirm_sign_up(
+                ClientId=COGNITO_CLIENT_ID,
+                Username=username,
+                ConfirmationCode=confirmation_code
+            )
+            flash("Confirmation successful! You can now log in.")
+            return redirect("login.html")
+        except Exception as e:
+            flash(f"Confirmation failed: {str(e)}")
 
+    return render_template("confirm.html")
 
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
@@ -402,3 +457,6 @@ def errorhandler(e):
 # Listen for errors
 for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
+
+if __name__ == '__main__':
+    app.run(ssl_context=('cert.pem', 'key.pem'))
