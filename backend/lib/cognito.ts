@@ -1,4 +1,4 @@
-import {Stack, StackProps} from "aws-cdk-lib";
+import {RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {Construct} from "constructs";
 import {AccountRecovery, UserPool, VerificationEmailStyle} from "aws-cdk-lib/aws-cognito";
 import {Role} from "aws-cdk-lib/aws-iam";
@@ -43,7 +43,8 @@ export class CognitoStack extends Stack {
                 email: true,
                 phone: true
             },
-            accountRecovery: AccountRecovery.EMAIL_ONLY
+            accountRecovery: AccountRecovery.EMAIL_ONLY,
+            removalPolicy: RemovalPolicy.DESTROY,
         });
         userPool.grant(props.ec2ServerRole, 'cognito-idp:AdminCreateUser');
     }

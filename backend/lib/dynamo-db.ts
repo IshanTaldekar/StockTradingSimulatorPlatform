@@ -1,4 +1,4 @@
-import {Stack, StackProps} from "aws-cdk-lib";
+import {RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {Construct} from "constructs";
 import {AttributeType, TableClass, TableV2} from "aws-cdk-lib/aws-dynamodb";
 
@@ -7,12 +7,13 @@ export class DynamoDBStack extends Stack {
         super(scope, id, props);
 
         const connectedSocketsTable = new TableV2(this, 'ConnectedSocketsTable', {
-            tableName: 'connected-sockets',
+            tableName: 'market-data-connections',
             partitionKey: {
-                name: 'key',
+                name: 'connection-id',
                 type: AttributeType.STRING
             },
             tableClass: TableClass.STANDARD_INFREQUENT_ACCESS,
+            removalPolicy: RemovalPolicy.DESTROY
         });
 
         const userTransactionsTable = new TableV2(this, 'UserTransactionsTable', {
@@ -21,7 +22,18 @@ export class DynamoDBStack extends Stack {
                 name: 'key',
                 type: AttributeType.STRING
             },
-            tableClass: TableClass.STANDARD_INFREQUENT_ACCESS
+            tableClass: TableClass.STANDARD_INFREQUENT_ACCESS,
+            removalPolicy: RemovalPolicy.DESTROY
         });
+
+        const userPotfolioTable = new TableV2(this, 'UserPortfolioTable', {
+            tableName: 'user-portfolios',
+            partitionKey: {
+                name: 'key',
+                type: AttributeType.STRING
+            },
+            tableClass: TableClass.STANDARD_INFREQUENT_ACCESS,
+            removalPolicy: RemovalPolicy.DESTROY
+        })
     }
 }

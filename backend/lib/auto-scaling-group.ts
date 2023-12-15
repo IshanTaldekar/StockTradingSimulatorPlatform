@@ -23,9 +23,5 @@ export class AutoScalingGroupStack extends Stack {
             maxCapacity: 5,
             role: props.ec2ServerRole
         });
-
-        this.autoScalingGroup.scaleOnRequestCount('ScalingPolicy', {
-            targetRequestsPerMinute: 60
-        });
     }
 }

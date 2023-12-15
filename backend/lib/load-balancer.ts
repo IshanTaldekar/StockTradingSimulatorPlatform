@@ -16,6 +16,7 @@ export class LoadBalancerStack extends Stack {
         const loadBalancer = new ApplicationLoadBalancer(this, 'StackTradingPlatformLoadBalancer', {
             vpc: props.vpc,
             internetFacing: true,
+
         });
 
         const listener = loadBalancer.addListener('RequestsListener', {
@@ -27,6 +28,10 @@ export class LoadBalancerStack extends Stack {
             targets: [
                 props.autoScalingGroup
             ]
+        });
+
+        props.autoScalingGroup.scaleOnRequestCount('ScalingPolicy', {
+            targetRequestsPerMinute: 60
         });
     }
 }
