@@ -7,11 +7,22 @@ import {RetentionDays} from "aws-cdk-lib/aws-logs";
 export interface LambdaStackProps extends StackProps {
     readonly marketDataConnectLambdaRole: Role,
     readonly marketDataDisconnectLambdaRole: Role,
+    readonly transactionsFetchLambdaRole: Role,
+    readonly transactionsBuyLambdaRole: Role,
+    readonly transactionsSellLambdaRole: Role,
+    readonly portfolioFetchLambdaRole: Role,
+    readonly newsFetchLatestAndSearchLambdaRole: Role,
 }
 
 export class LambdaStack extends Stack {
     public readonly marketDataConnectLambda: Function;
     public readonly marketDataDisconnectLambda: Function;
+    public readonly transactionsFetchLambda: Function;
+    public readonly transactionsBuyLambda: Function;
+    public readonly transactionsSellLambda: Function;
+    public readonly portfolioFetchLambda: Function;
+    public readonly newsFetchLatestLambda: Function;
+    public readonly newsSearchLambda: Function;
 
     constructor(scope: Construct, id: string, props: LambdaStackProps) {
         super(scope, id, props);
@@ -31,6 +42,60 @@ export class LambdaStack extends Stack {
             handler: 'market-data-disconnect-lambda.handler',
             code: Code.fromAsset('backend/assets/market-data-disconnect-lambda-deployment/market-data-disconnect-lambda-deployment-package.zip'),
             role: props.marketDataDisconnectLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        this.transactionsFetchLambda = new Function(this, 'TransactionsFetch', {
+            functionName: 'transactions-fetch',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'transactions-fetch-lambda.handler',
+            code: Code.fromAsset('backend/assets/transactions-fetch-lambda-deployment/transactions-fetch-lambda-deployment-package.zip'),
+            role: props.transactionsFetchLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        this.transactionsBuyLambda = new Function(this, 'TransactionsBuy', {
+            functionName: 'transactions-buy',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'transactions-buy-lambda.handler',
+            code: Code.fromAsset('backend/assets/transactions-buy-lambda-deployment/transactions-buy-lambda-deployment-package.zip'),
+            role: props.transactionsBuyLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        this.transactionsSellLambda = new Function(this, 'TransactionsSell', {
+            functionName: 'transactions-sell',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'transactions-sell-lambda.handler',
+            code: Code.fromAsset('backend/assets/transactions-sell-lambda-deployment/transactions-sell-lambda-deployment-package.zip'),
+            role: props.transactionsSellLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        this.portfolioFetchLambda = new Function(this, 'PortfolioFetch', {
+            functionName: 'portfolio-fetch',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'portfolio-fetch-lambda.handler',
+            code: Code.fromAsset('backend/assets/portfolio-fetch-lambda-deployment/portfolio-fetch-lambda-deployment-package.zip'),
+            role: props.portfolioFetchLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        this.newsFetchLatestLambda = new Function(this, 'NewsFetchLatest', {
+            functionName: 'news-fetch-latest',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'news-fetch-latest-lambda.handler',
+            code: Code.fromAsset('backend/assets/news-fetch-latest-lambda-deployment/news-fetch-latest-lambda-deployment-package.zip'),
+            role: props.newsFetchLatestAndSearchLambdaRole,
+            logRetention: RetentionDays.ONE_WEEK
+        });
+
+        this.newsSearchLambda = new Function(this, 'NewsSearchLatest', {
+            functionName: 'news-search',
+            runtime: Runtime.PYTHON_3_10,
+            handler: 'news-search-lambda.handler',
+            code: Code.fromAsset('backend/assets/news-search-lambda-deployment/news-search-lambda-deployment-package.zip'),
+            role: props.newsFetchLatestAndSearchLambdaRole,
             logRetention: RetentionDays.ONE_WEEK
         });
     }
