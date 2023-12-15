@@ -1,14 +1,15 @@
 import os
 import re
 from cs50 import SQL
-from flask import Flask, flash, jsonify, redirect, render_template, request, session
+from flask import Flask, flash, jsonify, redirect, render_template, url_for,request, session
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 import boto3
-
+from jose import jwt, JWTError
+import requests
 from helpers import apology, login_required, lookup, usd
 
 # Configure application
@@ -26,6 +27,35 @@ COGNITO_CLIENT_ID = '6htsmhkqjfro4u9mt7i2hfjltu'
 # AWS Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
 ##############################3
+
+def decode_jwt(token, jwks_url):
+    jwks = requests.get(jwks_url).json()
+    unverified_header = jwt.get_unverified_header(token)
+    rsa_key = {}
+    for key in jwks['keys']:
+        if key['kid'] == unverified_header['kid']:
+            rsa_key = {
+                'kty': key['kty'],
+                'kid': key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e'],
+            }
+    if rsa_key:
+        try:
+            decoded_token = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=['RS256'],
+                audience=COGNITO_CLIENT_ID,
+                issuer=f'https://cognito-idp.{AWS_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}',
+            )
+            return decoded_token
+        except JWTError as e:
+            print(e)
+    return None
+
+
 
 # Ensure responses aren't cached
 @app.after_request
@@ -59,9 +89,15 @@ def index():
     rows = db.execute("SELECT * FROM stock_info WHERE user_id = :user",
                           user=session["user_id"])
 
-    cash = db.execute("SELECT cash FROM users WHERE id = :user",
-                          user=session["user_id"])[0]['cash']
+    # Retrieve user's cash balance
+    cash_query = db.execute("SELECT cash FROM users WHERE id = :user", user=session["user_id"])
 
+    if not cash_query:
+        # Handle the case where the cash query did not return any results
+        flash("User has no stocks.")
+        cash = 0  # Set a default value or handle it based on your requirements
+    else:
+        cash = cash_query[0]['cash']
     total = cash
     stock_info = []
     for index, row in enumerate(rows):
@@ -105,7 +141,7 @@ def buy():
 
         totalcost = float(stockqty) * stks['price']
         money = db.execute("SELECT cash FROM users WHERE id=:id", id=session["user_id"]);
-        if(totalcost > float(money[0]["cash"])):
+        if(totalcost > float(money)):
             return apology("You do not have enough Cash")
 
         # Check if user already has one or more stocks from the same company
@@ -162,7 +198,7 @@ def news():
                           user=session["user_id"])
 
     newsinfo = []
-    for row in trans:
+    for row in newsum:
         #stocks = lookup(row['stock'])
 
         # create a list with all the info about the transaction and append it to a list of every stock transaction
@@ -213,6 +249,22 @@ def login():
             # Extract and return the access token, secret key, and session token
             session['AccessToken'] = response['AuthenticationResult']['AccessToken']
 
+            ###########################################
+                        # Decode the AccessToken to extract user information
+            jwks_url = f'https://cognito-idp.{AWS_REGION}.amazonaws.com/{COGNITO_USER_POOL_ID}/.well-known/jwks.json'
+            decoded_token = decode_jwt(session['AccessToken'], jwks_url)
+
+            if decoded_token:
+                # You can now access user information from the decoded_token
+                user_id = decoded_token.get('sub')
+                email = decoded_token.get('email')
+                username = decoded_token.get('username')
+
+                # Store user information in the session
+                session['user_id'] = user_id
+                session['email'] = email
+                session['username'] = username
+            ###############################################
             # Redirect user to home page
             flash("Logged in successfully!")
             return redirect("/")
@@ -352,7 +404,7 @@ def register():
                     ]      
                 )
                 flash("Registration is successful!! Please check your email for confirmation.")
-                return redirect("templates/confirm.html")
+                return redirect(url_for('confirm'))
 
             except Exception as e:
                 print(e)
@@ -376,7 +428,7 @@ def confirm():
                 ConfirmationCode=confirmation_code
             )
             flash("Confirmation successful! You can now log in.")
-            return redirect("login.html")
+            return redirect(url_for('login'))
         except Exception as e:
             flash(f"Confirmation failed: {str(e)}")
 
