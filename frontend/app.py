@@ -12,6 +12,8 @@ from jose import jwt, JWTError
 import requests
 import urllib
 from helpers import apology, login_required, lookup, usd
+import matplotlib.pyplot as plt
+
 
 # Configure application
 app = Flask(__name__)
@@ -22,8 +24,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 ###################
 # AWS Cognito configuration
 AWS_REGION = 'us-east-1'
-COGNITO_USER_POOL_ID = 'us-east-1_5wKHtOZwk'
-COGNITO_CLIENT_ID = '6htsmhkqjfro4u9mt7i2hfjltu'
+COGNITO_USER_POOL_ID = 'us-east-1_kmTngi7Sn'
+COGNITO_CLIENT_ID = '306cs4d6drr0baordvra2u8e58'
 
 # AWS Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
@@ -363,7 +365,28 @@ def lookup_yahoo_finance_api(symbol):
             # Handle exceptions (e.g., network errors)
             print(f"Error fetching data for {symbol}: {e}")
             return None
-        
+
+@app.route("/graph/<symbol>")
+@login_required
+def graph(symbol):
+    """Plot graph for historical stock data."""
+    # Fetch historical stock data from the API Gateway
+    stock_data = requests.get(f'https://your-api-gateway-url/history/{symbol}').json()
+
+    # Extract relevant data for plotting (you may need to customize this based on your API response)
+    dates = [entry['date'] for entry in stock_data['data']]
+    prices = [entry['price'] for entry in stock_data['data']]
+
+    # Plot the graph
+    plt.plot(dates, prices)
+    plt.title(f'Historical Stock Prices for {symbol}')
+    plt.xlabel('Date')
+    plt.ylabel('Price')
+    plt.show()
+
+    return render_template("graph.html")  
+
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""

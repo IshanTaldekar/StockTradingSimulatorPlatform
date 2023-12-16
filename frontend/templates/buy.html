@@ -7,7 +7,7 @@
 {% block main %}
 <form method="post" action="/buy">
     <div class="form-group">
-        <label for="symbol">Select Stock Symbol:</label>
+        <label for="symbol">Stock:</label>
         <select class="form-control" id="symbol" name="symbol">
             {% for stock_symbol in stock_symbols %}
                 <option value="{{ stock_symbol }}">{{ stock_symbol }}</option>
@@ -15,7 +15,7 @@
         </select>
     </div>
     <div class="form-group">
-        <label for="shares">Number of Shares:</label>
+        <label for="shares">No of Shares:</label>
         <input type="number" class="form-control" id="shares" name="shares" required>
     </div>
     <button type="submit" class="btn btn-primary">Buy Stocks</button>
