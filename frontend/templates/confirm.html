@@ -5,22 +5,14 @@
 {% endblock %}
 
 {% block main %}
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class="flashes">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
+
 
 <form method="post" >
     <label for="username">Username:</label>
     <input type="text" id="username" name="username" required><br>
 
     <label for="confirmation_code">Confirmation Code:</label>
-    <input type="text" id="confirmation_code" name="confirmation_code" required><br>
+    <input type="password" id="confirmation_code" name="confirmation_code" required><br>
 
     <input type="submit" value="Confirm">
 </form>

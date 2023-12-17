@@ -5,17 +5,19 @@
 {% endblock %}
 
 {% block main %}
-    <form action="{{ url_for('sell') }}" method="post">
-        <fieldset>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock Symbol" type="text"/>
-            </div>
-            <div class="form-group">
-                <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="No of Shares" type="number"/>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-default" type="submit">Sell</button>
-            </div>
-        </fieldset>
-    </form>
+<form method="post" action="/buy">
+    <div class="form-group">
+        <label for="symbol">Stock:</label>
+        <select class="form-control" id="symbol" name="symbol">
+            {% for stock_symbol in stock_symbols %}
+                <option value="{{ stock_symbol }}">{{ stock_symbol }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="shares">No of Shares:</label>
+        <input type="number" class="form-control" id="shares" name="shares" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Sell Stocks</button>
+</form>
 {% endblock %}

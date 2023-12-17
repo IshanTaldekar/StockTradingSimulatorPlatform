@@ -5,22 +5,19 @@
 {% endblock %}
 
 {% block main %}
-<table class="table">
-    <thead class="thead-light">
-        <tr>
-            <th scope="col">Symbol</th>
-            <th scope="col">Name</th>
-            <th scope="col">Price</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for stock in stocks %}
-            <tr>
-                <td>{{ stock["symbol"] }}</td>
-                <td>{{ stock["shortName"] }}</td>
-                <td>${{ stock["price"] | round(2) }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<form method="post" action="/quote">
+    <div class="form-group">
+        <label for="symbol">Stock:</label>
+        <select class="form-control" id="symbol" name="stock_symbol">
+            {% for stock_symbol in stock_symbols %}
+                <option value="{{ stock_symbol['symbol'] }}">{{ stock_symbol['shortName'] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        {{ candlestick_chart | safe }}
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Get Quote</button>
+</form>
 {% endblock %}

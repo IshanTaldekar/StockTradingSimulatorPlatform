@@ -13,7 +13,8 @@ import requests
 import urllib
 from helpers import apology, login_required, lookup, usd
 import matplotlib.pyplot as plt
-
+import yfinance as yf
+import plotly.graph_objs as go
 
 # Configure application
 app = Flask(__name__)
@@ -24,8 +25,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 ###################
 # AWS Cognito configuration
 AWS_REGION = 'us-east-1'
-COGNITO_USER_POOL_ID = 'us-east-1_kmTngi7Sn'
-COGNITO_CLIENT_ID = '306cs4d6drr0baordvra2u8e58'
+COGNITO_USER_POOL_ID = 'us-east-1_H8EWiqFe2'
+COGNITO_CLIENT_ID = '3221bimcrvdpk7s2c3k39qfm3i'
 
 # AWS Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
@@ -58,8 +59,6 @@ def decode_jwt(token, jwks_url):
             print(e)
     return None
 
-
-
 # Ensure responses aren't cached
 @app.after_request
 def after_request(response):
@@ -89,110 +88,89 @@ db = SQL("sqlite:///finance.db")
 @login_required
 def index():
 
-    rows = db.execute("SELECT * FROM stock_info WHERE user_id = :user",
-                          user=session["user_id"])
+    # Assuming your API endpoint is hosted on AWS Lambda, you need to replace the URL with your actual API endpoint
+    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
 
-    # Retrieve user's cash balance
-    cash_query = db.execute("SELECT cash FROM users WHERE id = :user", user=session["user_id"])
+    # Retrieve username from the Flask session
+    username = session.get('username')
 
-    if not cash_query:
-        # Handle the case where the cash query did not return any results
-        flash("User has no stocks.")
-        cash = 0  # Set a default value or handle it based on your requirements
+    # Make a request to your API
+    api_response = requests.get(api_url.format(username=username))
+
+    if api_response.status_code == 200:
+        # Parse the JSON response from the API
+        api_data = api_response.json()
+        return render_template("index.html",api_data=api_data)
     else:
-        cash = cash_query[0]['cash']
-    total = cash
-    stock_info = []
-    for index, row in enumerate(rows):
-        stocks = lookup(row['stock_symbol'])
-
-        # create a list with all the info about the stock and append it to a list of every stock owned by the user
-        stock_info.append(list((stocks['symbol'], stocks['name'], row['stock_qty'], stocks['price'], round(stocks['price'] * row['stock_qty'], 2))))
-        total += stock_info[index][4]
-
-    return render_template("index.html", stock_info=stock_info, cash=round(cash, 2), total=round(total, 2))
-
+        flash("User has no stocks")
+        return render_template("index.html")
+    
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    """Buy shares of stock"""
+    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
 
+    # Retrieve username from the Flask session
+    username = session.get('username')
     if request.method == 'POST':
-        sym=request.form.get("symbol").upper()
-        stockqty=int(request.form.get("shares"))
-        stks=lookup(sym)
-        status=True
-        # Ensure Symbol was submitted
-        if not sym:
-            status=False
-            return apology("Must provide Symbol")
-
+        sym = request.form.get("symbol").upper()
+        stock_qty = int(request.form.get("shares"))
+        stks = lookup(sym)
         # Ensure No of shares was submitted
-        if not stockqty:
-            status=False
+        if not stock_qty:
             return apology("Must provide Total shares to be purchased")
 
         # Ensure No of shares is greater than 0
-        if stockqty<=0:
-            status=False
+        if stock_qty <= 0:
             return apology("Must provide a positive number")
 
-        # check if valid stock symbol is provided
-        if not stks:
-            return apology("Stock symbol is not valid")
+        # Call your buy API here
+        user_info_api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/transactions/buy"
 
-        totalcost = float(stockqty) * stks['price']
-        money = db.execute("SELECT cash FROM users WHERE id=:id", id=session["user_id"]);
-        if(totalcost > float(money)):
-            return apology("You do not have enough Cash")
+            # Call your AWS Lambda function   
+        data = {
+            'username': session['username'],
+            'stockId': stks['symbol'],
+            'quantity': str(stock_qty),
+        }
 
-        # Check if user already has one or more stocks from the same company
-        stock = db.execute("SELECT stock_qty FROM stock_info WHERE user_id = :user AND stock_symbol = :symbol",
-                          user=session["user_id"], symbol=stks["symbol"])
+        user_info_response = requests.post(user_info_api_url,json=data)
 
-        # Insert new row into the stock table
-        if not stock:
-            db.execute("INSERT INTO stock_info(user_id, stock_symbol, stock_qty) VALUES (:user, :symbol, :stock_qty)",
-                user=session["user_id"], symbol=stks["symbol"] , stock_qty=stockqty)
+        if user_info_response.status_code == 200:
+            # Fetch updated user information after buying stocks
+            api_response = requests.get(api_url.format(username=session['username']))
+            print(f"API Response: {api_response.text}")  # Add this line for debugging
 
-        # update row into the stock table
+            if api_response.status_code == 200:
+                api_data = api_response.json()
+                flash("Bought the stocks!")
+                return render_template("index.html", api_data=api_data)
+            else:
+                flash("User has no stocks")
+                return render_template("index.html")
         else:
-            stockqty += stock[0]["stock_qty"]
+            return apology(f"Failed to buy stocks: {user_info_response.text}")
 
-            db.execute("UPDATE stock_info SET stock_qty = :stock_qty WHERE user_id = :user AND stock_symbol = :stock_symbol",
-                user=session["user_id"], stock_symbol=stks["symbol"], stock_qty=stockqty)
-
-        # update user's cash
-        db.execute("UPDATE users SET cash=cash-:cost WHERE id=:id", cost=totalcost, id=session["user_id"])
-
-        # Update transaction table
-        db.execute("INSERT INTO 'transaction'(user_id, stock, quantity, price, total, date) VALUES (:user_id, :stock, :stock_qty, :price, :total, :date)",
-                user_id=session["user_id"], stock=stks["symbol"],stock_qty=stockqty, price=stks["price"],total=round(stockqty*float(stks["price"])),date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-        # Redirect user to index page with a success message
-        flash("Bought the stocks!")
-        return redirect("/")
     else:
-        return render_template("buy.html", stock_symbols=["AAPL", "GOOGL", "MSFT", "AMZN", "FB", "TSLA", "NVDA", "NFLX", "INTC", "AMD"])
+        return render_template("buy.html", stock_symbols=["AAPL", "GOOGL", "MSFT", "AMZN", "F", "TSLA", "NVDA", "NFLX", "INTC", "AMD"])
+
 
 
 @app.route("/history")
 @login_required
 def history():
 
-    trans = db.execute("SELECT * FROM 'transaction' WHERE user_id = :user",
-                          user=session["user_id"])
+    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/transactions/history/{username}"
 
-    transaction = []
-    for row in trans:
-        stocks = lookup(row['stock'])
+    # Retrieve username from the Flask session
+    username = session.get('username')
 
-        # create a list with all the info about the transaction and append it to a list of every stock transaction
-        transaction.append(list((stocks['symbol'], stocks['name'], row['quantity'], row['total'], row['date'])))
-
-    # redirect user to index page
-    return render_template("history.html", transaction=transaction)
+    # Make a request to your API for transaction history
+    api_response = requests.get(api_url.format(username=username))
+    transaction_history = api_response.json()
+    return render_template("history.html", transaction_history=transaction_history)
+   
 
 @app.route("/news")
 @login_required
@@ -321,22 +299,48 @@ def changepaswd():
     else:
         return render_template("changepaswd.html")
 
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-    
-    # Example: Fetch information for 10 stock symbols
-    stock_symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "FB", "TSLA", "NVDA", "NFLX", "INTC", "AMD"]
-    stocks_data = []
 
-    # Iterate through the stock symbols and fetch information
+def get_stock_symbols():
+    stock_symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "F", "TSLA", "NVDA", "NFLX", "INTC", "AMD"]
+    stock_symbols_with_names = []
+
     for symbol in stock_symbols:
         stock_info = lookup_yahoo_finance_api(symbol)
         if stock_info:
-            stocks_data.append(stock_info)
-    print(stocks_data)
-    return render_template("quote.html", stocks=stocks_data)
+            stock_symbols_with_names.append({"symbol": stock_info["symbol"], "shortName": stock_info["shortName"]})
+
+    return stock_symbols_with_names
+
+@app.route("/quote", methods=["GET", "POST"])
+@login_required
+def quote():
+    stock_symbols = get_stock_symbols()
+
+    if request.method == 'POST':
+        selected_stock_symbol = request.form.get('stock_symbol')
+        stock = next((s for s in stock_symbols if s['symbol'] == selected_stock_symbol), None)
+
+        if stock:
+            stock_info = lookup_yahoo_finance_api(selected_stock_symbol)
+
+            if stock_info:
+                stock_data = yf.download(selected_stock_symbol, start='2022-01-01', end='2023-01-01', progress=False)
+
+                if not stock_data.empty:
+                    candlestick_chart = go.Figure(data=[go.Candlestick(x=stock_data.index,
+                                                                        open=stock_data['Open'],
+                                                                        high=stock_data['High'],
+                                                                        low=stock_data['Low'],
+                                                                        close=stock_data['Close'])])
+                    candlestick_chart.update_layout(title=f'Candlestick Chart for {stock["shortName"]}',
+                                                   xaxis_title='Date', yaxis_title='Stock Price')
+
+                    return render_template("quote.html", stock_symbols=stock_symbols, selected_stock=stock, stock_info=stock_info, candlestick_chart=candlestick_chart.to_html(full_html=False))
+                else:
+                    return render_template("quote.html", stock_symbols=stock_symbols, error_message="Failed to fetch stock data.")
+
+    return render_template("quote.html", stock_symbols=stock_symbols)
+
 
 
 def lookup_yahoo_finance_api(symbol):
@@ -365,26 +369,6 @@ def lookup_yahoo_finance_api(symbol):
             # Handle exceptions (e.g., network errors)
             print(f"Error fetching data for {symbol}: {e}")
             return None
-
-@app.route("/graph/<symbol>")
-@login_required
-def graph(symbol):
-    """Plot graph for historical stock data."""
-    # Fetch historical stock data from the API Gateway
-    stock_data = requests.get(f'https://your-api-gateway-url/history/{symbol}').json()
-
-    # Extract relevant data for plotting (you may need to customize this based on your API response)
-    dates = [entry['date'] for entry in stock_data['data']]
-    prices = [entry['price'] for entry in stock_data['data']]
-
-    # Plot the graph
-    plt.plot(dates, prices)
-    plt.title(f'Historical Stock Prices for {symbol}')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
-    plt.show()
-
-    return render_template("graph.html")  
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -489,15 +473,15 @@ def confirm():
 @login_required
 def sell():
     """Sell shares of stock"""
+    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
+
+    # Retrieve username from the Flask session
+    username = session.get('username')
     if request.method == 'POST':
         sym=request.form.get("symbol").upper()
         stockqty=int(request.form.get("shares"))
         stks=lookup(sym)
         status=True
-        # Ensure Symbol was submitted
-        if not sym:
-            status=False
-            return apology("Must provide Symbol")
 
         # Ensure No of shares was submitted
         if not stockqty:
@@ -509,46 +493,36 @@ def sell():
             status=False
             return apology("Must provide a positive number")
 
-        # check if valid stock symbol is provided
-        if not stks:
-            return apology("Stock symbol is not valid")
+        # Call your buy API here
+        user_info_api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/transactions/sell"
 
-        # Update stocks table
-        stock_qty_bef = db.execute("SELECT stock_qty FROM stock_info WHERE user_id = :user AND stock_symbol = :symbol",
-                          symbol=sym, user=session["user_id"])[0]['stock_qty']
-        stock_qty_after = stock_qty_bef - stockqty
+            # Call your AWS Lambda function   
+        data = {
+            'username': session['username'],
+            'stockId': stks['symbol'],
+            'quantity': str(stockqty),
+        }
 
-        # delete stock from table if we sold every unit
-        if stock_qty_after == 0:
-            db.execute("DELETE FROM stock_info WHERE user_id = :user AND stock_symbol = :symbol",
-                          symbol=sym, user=session["user_id"])
+        user_info_response = requests.post(user_info_api_url,json=data)
 
-        # stop the transaction if the user does not have enough stocks
-        elif stock_qty_after < 0:
-            return apology("That's more than the stocks you own")
+        if user_info_response.status_code == 200:
+            # Fetch updated user information after buying stocks
+            api_response = requests.get(api_url.format(username=session['username']))
+            print(f"API Response: {api_response.text}")  # Add this line for debugging
 
-        # otherwise update with new value
+            if api_response.status_code == 200:
+                api_data = api_response.json()
+                flash("Sold the stocks!")
+                return render_template("index.html", api_data=api_data)
+            else:
+                flash("User has no stocks")
+                return render_template("index.html")
         else:
-            db.execute("UPDATE stock_info SET stock_qty = :quantity WHERE user_id = :user AND stock_symbol = :symbol",
-                          symbol=sym, user=session["user_id"], quantity=stock_qty_after)
+            return apology(f"Failed to sell stocks: {user_info_response.text}")
 
-        # calculate and update user's cash
-        cash = db.execute("SELECT cash FROM users WHERE id = :user",
-                          user=session["user_id"])[0]['cash']
-        cash_after = cash + stks["price"] * float(stockqty)
-
-        db.execute("UPDATE users SET cash = :cash WHERE id = :user",
-                          cash=cash_after, user=session["user_id"])
-
-        # Update transaction table
-        db.execute("INSERT INTO 'transaction'(user_id, stock,quantity,price,total,date) VALUES (:user, :stock, :stockqty, :price,:total,:date)",
-                user=session["user_id"], stock=stks["symbol"],stockqty=-stockqty, price=stks["price"],total=round(stockqty*float(stks["price"])),date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-        # Redirect user to home page with success message
-        flash("Sold!")
-        return redirect("/")
     else:
-        return render_template("sell.html")
+        return render_template("sell.html", stock_symbols=["AAPL", "GOOGL", "MSFT", "AMZN", "F", "TSLA", "NVDA", "NFLX", "INTC", "AMD"])
+
 
 def errorhandler(e):
     """Handle error"""
