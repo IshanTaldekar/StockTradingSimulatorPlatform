@@ -7,9 +7,9 @@ from polygon.websocket.models import Market
 from dotenv import load_dotenv
 import os
 
-def update_redis_cache(q):
+def update_redis_cache(url, q):
     r = redis.Redis(
-        host='44.204.13.24',
+        host=url,
         port='6379',
         decode_responses=True
     )
@@ -50,7 +50,8 @@ def get_api_key():
 
 def stream_forex_prices(api_key, q):
     client = WebSocketClient(market=Market.Forex, api_key=api_key, verbose=True)
-    client.subscribe("CAS.*")
+    # client.subscribe("CAS.*")
+    client.subscribe("CAS.USD/EUR")
 
     def handle_msg(msgs):
         for msg in msgs:
@@ -63,8 +64,9 @@ if __name__ == '__main__':
     load_dotenv()
     q = Queue()
     api_key = get_api_key()
+    redis_url = os.getenv("REDIS_URL")
     p1 = Process(target=stream_forex_prices, args=(api_key, q,))
-    p2 = Process(target=update_redis_cache, args=(q,))
+    p2 = Process(target=update_redis_cache, args=(redis_url, q,))
     p1.start()
     p2.start()
     p1.join()

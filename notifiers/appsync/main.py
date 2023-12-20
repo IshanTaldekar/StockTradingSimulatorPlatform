@@ -3,13 +3,12 @@ import redis
 from dotenv import load_dotenv
 import os
 import requests
-from graphqlclient import GraphQLClient
 import json
 import requests
 
-def fetch_current_forex_prices(q):
+def fetch_current_forex_prices(url, q):
     r = redis.Redis(
-        host='44.204.13.24',
+        host=url,
         port='6379',
         decode_responses=True
     )
@@ -24,11 +23,10 @@ def fetch_current_forex_prices(q):
         if val is not None:
             q.put({'name': name,'data': val})
 
-def perform_mutations_appsync(api_key, q):
+def perform_mutations_appsync(api_key, url, q):
     while True:
         msg = q.get()
         print("got msg:", msg)
-        url = 'https://n7ztzr43sna5vgigikzbrkbrmq.appsync-api.us-east-1.amazonaws.com/graphql'
         headers = {
             'x-api-key': api_key
         }
@@ -52,9 +50,12 @@ if __name__ == '__main__':
     load_dotenv()
     q = Queue()
     api_key = os.getenv("API_KEY_APPSYNC")
-    p1 = Process(target=fetch_current_forex_prices, args=(q,))
-    p2 = Process(target=perform_mutations_appsync, args=(api_key, q,))
+    redis_url = os.getenv("REDIS_URL")
+    appsync_url = os.getenv("APPSYNC_URL")
+    p1 = Process(target=fetch_current_forex_prices, args=(redis_url, q,))
+    p2 = Process(target=perform_mutations_appsync, args=(api_key, appsync_url, q,))
     p1.start()
     p2.start()
     p1.join()
     p2.join()
+
