@@ -15,6 +15,7 @@ from helpers import apology, login_required, lookup, usd
 import matplotlib.pyplot as plt
 import yfinance as yf
 import plotly.graph_objs as go
+from datetime import datetime, timedelta
 
 # Configure application
 app = Flask(__name__)
@@ -25,8 +26,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 ###################
 # AWS Cognito configuration
 AWS_REGION = 'us-east-1'
-COGNITO_USER_POOL_ID = 'us-east-1_H8EWiqFe2'
-COGNITO_CLIENT_ID = '3221bimcrvdpk7s2c3k39qfm3i'
+COGNITO_USER_POOL_ID = 'us-east-1_kbaObNghj'
+COGNITO_CLIENT_ID = '10pb7tp6nigkmu4vrodqjose2e'
 
 # AWS Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
@@ -89,7 +90,7 @@ db = SQL("sqlite:///finance.db")
 def index():
 
     # Assuming your API endpoint is hosted on AWS Lambda, you need to replace the URL with your actual API endpoint
-    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
+    api_url = "  https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
 
     # Retrieve username from the Flask session
     username = session.get('username')
@@ -109,30 +110,35 @@ def index():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
+    api_url = " https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"
 
+    # Retrieve username from the Flask session
     # Retrieve username from the Flask session
     username = session.get('username')
     if request.method == 'POST':
-        sym = request.form.get("symbol").upper()
-        stock_qty = int(request.form.get("shares"))
-        stks = lookup(sym)
+        sym=request.form.get("symbol").upper()
+        stockqty=int(request.form.get("shares"))
+        stks=lookup(sym)
+        status=True
+
         # Ensure No of shares was submitted
-        if not stock_qty:
-            return apology("Must provide Total shares to be purchased")
+        if not stockqty:
+            status=False
+            return apology("Must provide Total shares to be sold")
 
         # Ensure No of shares is greater than 0
-        if stock_qty <= 0:
+        if stockqty<=0:
+            status=False
             return apology("Must provide a positive number")
 
         # Call your buy API here
-        user_info_api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/transactions/buy"
+        user_info_api_url = "https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/transactions/buy"
 
             # Call your AWS Lambda function   
         data = {
             'username': session['username'],
             'stockId': stks['symbol'],
-            'quantity': str(stock_qty),
+            'quantity': str(stockqty),
         }
 
         user_info_response = requests.post(user_info_api_url,json=data)
@@ -161,32 +167,51 @@ def buy():
 @login_required
 def history():
 
-    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/transactions/history/{username}"
+    api_url = "  https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/transactions/fetch/{username}"
 
     # Retrieve username from the Flask session
     username = session.get('username')
 
     # Make a request to your API for transaction history
     api_response = requests.get(api_url.format(username=username))
-    transaction_history = api_response.json()
-    return render_template("history.html", transaction_history=transaction_history)
+    api_data = api_response.json()
+    print(api_data)
+    return render_template("history.html", api_data=api_data)
    
 
-@app.route("/news")
-@login_required
+@app.route("/news" ,methods=["GET","POST"])
 def news():
-    newsum = db.execute("SELECT * FROM 'newsinfo' WHERE user_id = :user",
-                          user=session["user_id"])
 
-    newsinfo = []
-    for row in newsum:
-        #stocks = lookup(row['stock'])
-
-        # create a list with all the info about the transaction and append it to a list of every stock transaction
-        newsinfo.append(list(['index'],['summary'], ['link']))
-
-    # redirect user to index page
-    return render_template("news.html")
+    if request.method == "GET":
+    # Make a request to your API for transaction history
+        api_url = "https://6vg1hb44u1.execute-api.us-east-1.amazonaws.com/dev/fetch"
+        response = requests.get(api_url)
+        data = response.json()
+        response_data=[]
+        for index, data_point in enumerate(data):
+            data_ = {}
+            display_data = data_point.get('_source', {})
+            data_["summary"] = display_data.get("summary", {})
+            data_["url"] = display_data.get("url", {})
+            data_["index"] = index + 1
+            response_data.append(data_)
+    
+    elif request.method == "POST":
+        keyword=request.form.get("query")
+        api_url2=f"https://6vg1hb44u1.execute-api.us-east-1.amazonaws.com/dev/search?keywords={keyword}"
+        response = requests.get(api_url2)
+        data = response.json()
+        response_data=[]
+        for index, data_point in enumerate(data):
+            data_ = {}
+            display_data = data_point.get('_source', {})
+            data_["summary"] = display_data.get("summary", {})
+            data_["url"] = display_data.get("url", {})
+            data_["index"] = index + 1
+            response_data.append(data_)
+            
+    return render_template("news.html", data=response_data)
+    
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -308,7 +333,6 @@ def get_stock_symbols():
         stock_info = lookup_yahoo_finance_api(symbol)
         if stock_info:
             stock_symbols_with_names.append({"symbol": stock_info["symbol"], "shortName": stock_info["shortName"]})
-
     return stock_symbols_with_names
 
 @app.route("/quote", methods=["GET", "POST"])
@@ -318,13 +342,17 @@ def quote():
 
     if request.method == 'POST':
         selected_stock_symbol = request.form.get('stock_symbol')
-        stock = next((s for s in stock_symbols if s['symbol'] == selected_stock_symbol), None)
+        stock = next((s for s in stock_symbols if 'symbol' in s and s['symbol'] == selected_stock_symbol), None)
 
         if stock:
             stock_info = lookup_yahoo_finance_api(selected_stock_symbol)
 
             if stock_info:
-                stock_data = yf.download(selected_stock_symbol, start='2022-01-01', end='2023-01-01', progress=False)
+                end_date = datetime.now().strftime('%Y-%m-%d')
+                start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+
+                stock_data = yf.download(selected_stock_symbol, start=start_date, end=end_date, progress=False)
+
 
                 if not stock_data.empty:
                     candlestick_chart = go.Figure(data=[go.Candlestick(x=stock_data.index,
@@ -341,34 +369,32 @@ def quote():
 
     return render_template("quote.html", stock_symbols=stock_symbols)
 
-
-
 def lookup_yahoo_finance_api(symbol):
-        api_url = f"https://query1.finance.yahoo.com/v1/finance/lookup?query={symbol}&type=equity"
-        headers = {
+    api_url = f"https://query1.finance.yahoo.com/v1/finance/lookup?query={symbol}&type=equity"
+    headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        }
-
-        try:
-            response = requests.get(api_url, headers=headers)
-            response.raise_for_status()  # Raise an exception for bad responses (4xx and 5xx)
-            data = response.json()
+    }
+    stock_info = None
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()  # Raise an exception for bad responses (4xx and 5xx)
+        data = response.json()
 
             # Extract relevant information from the API response
-            documents = data.get("finance", {}).get("result", [{}])[0].get("documents", [])
-            if documents:
-                result = documents[0]
-                short_name = result.get("shortName") or result.get("longName") or "N/A"
-                stock_info = {
-                    "shortName": short_name,
-                    "symbol": result.get("symbol", "N/A"),
-                    "price": result.get("regularMarketPrice", {}).get("raw", "N/A"),
-                }
+        documents = data.get("finance", {}).get("result", [{}])[0].get("documents", [])
+        if documents:
+            result = documents[0]
+            short_name = result.get("shortName") or result.get("longName") or "N/A"
+            stock_info = {
+                "shortName": short_name,
+                "symbol": result.get("symbol", "N/A"),
+                "price": result.get("regularMarketPrice", {}).get("raw", "N/A"),
+            }
             return stock_info
-        except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException as e:
             # Handle exceptions (e.g., network errors)
-            print(f"Error fetching data for {symbol}: {e}")
-            return None
+        print(f"Error fetching data for {symbol}: {e}")
+    return stock_info
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -473,7 +499,7 @@ def confirm():
 @login_required
 def sell():
     """Sell shares of stock"""
-    api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
+    api_url = "  https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
 
     # Retrieve username from the Flask session
     username = session.get('username')
@@ -486,7 +512,7 @@ def sell():
         # Ensure No of shares was submitted
         if not stockqty:
             status=False
-            return apology("Must provide Total shares to be purchased")
+            return apology("Must provide Total shares to be sold")
 
         # Ensure No of shares is greater than 0
         if stockqty<=0:
@@ -494,7 +520,7 @@ def sell():
             return apology("Must provide a positive number")
 
         # Call your buy API here
-        user_info_api_url = "https://pry9rtwz28.execute-api.us-east-1.amazonaws.com/prod/transactions/sell"
+        user_info_api_url = "  https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/transactions/sell"
 
             # Call your AWS Lambda function   
         data = {

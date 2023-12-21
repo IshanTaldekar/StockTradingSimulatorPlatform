@@ -5,9 +5,8 @@
 {% endblock %}
 
 {% block main %}
-    <h1>Transaction History</h1>
 
-    {% if transaction_history %}
+    {% if api_data %}
         <table class="table">
             <thead class="thead-light">
                 <tr>
@@ -15,21 +14,17 @@
                     <th scope="col">Action</th>
                     <th scope="col">Quantity</th>
                     <th scope="col">Timestamp</th>
-                    <th scope="col">Transaction Amount</th>
-                    <th scope="col">Stock Price</th>
                 </tr>
             </thead>
             <tbody>
-                {% for transaction in transaction_history %}
-                    <tr>
-                        <td>{{ transaction['stock-id']['S'] }}</td>
-                        <td>{{ transaction['action']['S'] }}</td>
-                        <td>{{ transaction['quantity']['N'] }}</td>
-                        <td>{{ transaction['timestamp']['S'] }}</td>
-                        <td>{{ transaction['transaction-amount']['N'] }}</td>
-                        <td>{{ transaction['stock-price']['N'] }}</td>
-                    </tr>
-                {% endfor %}
+              {% for transaction in api_data %}
+                  <tr>
+                      <td>{{ transaction['stock-id']['S'] }}</td>
+                      <td>{{ transaction['action']['S'] }}</td>
+                      <td>{{ transaction['quantity']['N'] }}</td>
+                      <td>{{ transaction['timestamp']['S'] }}</td>
+                  </tr>
+              {% endfor %}
             </tbody>
         </table>
     {% else %}

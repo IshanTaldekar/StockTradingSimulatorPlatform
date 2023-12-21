@@ -10,8 +10,6 @@
     {% if api_data.message %}
         <p>Username: {{ api_data.message.username.S }}</p>
         <p>Cash: {{ api_data.message.cash.N }}</p>
-
-        <h2>Stocks:</h2>
         <table class="table">
           <thead class="thead-light">
               <tr>
@@ -23,9 +21,13 @@
             {% for stock in api_data.message.stocks.L %}
             <tr>
                 <td>{{ stock.M['stock-id'].S }}</td>
-                <td>{{ stock.M.transactions.L[-1].M.quantity.N }}</td>
+                {% if stock.M.transactions.L %}
+                    <td>{{ stock.M.transactions.L[-1].M.quantity.N }}</td>
+                {% else %}
+                    <td>0</td>
+                {% endif %}
             </tr>
-        {% endfor %}
+            {% endfor %}
           </tbody>
       </table>
     {% else %}

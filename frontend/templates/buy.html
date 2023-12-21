@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Log In
+    Buy
 {% endblock %}
 
 {% block main %}
@@ -10,7 +10,7 @@
         <label for="symbol">Stock:</label>
         <select class="form-control" id="symbol" name="symbol">
             {% for stock_symbol in stock_symbols %}
-                <option value="{{ stock_symbol }}">{{ stock_symbol }}</option>
+            <option value="{{ stock_symbol }}">{{ stock_symbol }}</option>
             {% endfor %}
         </select>
     </div>

@@ -6,7 +6,7 @@
 
 {% block main %}
 <div class="search-container">
-    <form action="" method="get">
+    <form action="{{ url_for('news') }}" method="post">
         <input type="text" placeholder="Search..." name="query">
         <button type="submit">Search</button>
     </form>
@@ -22,41 +22,15 @@
             </tr>
         </thead>
         <tbody>
-            {% for transactions in transaction %}
-                {# Check if there is a search query and filter results accordingly #}
-                {% if query and (query.lower() in transactions[1].lower() or query.lower() in transactions[2].lower()) %}
-                    <tr>
-                        <th scope="row">{{ transactions[0] }}</th>
-                        <td>{{ transactions[1] }}</td>
-                        <td>{{ transactions[2] }}</td>
-                        <td>{{ transactions[3] }}</td>
-                        <td>{{ transactions[4] }}</td>
-                    </tr>
-                {% elif not query %}
-                    {# If no search query, show all results #}
-                    <tr>
-                        <th scope="row">{{ transactions[0] }}</th>
-                        <td>{{ transactions[1] }}</td>
-                        <td>{{ transactions[2] }}</td>
-                        <td>{{ transactions[3] }}</td>
-                        <td>{{ transactions[4] }}</td>
-                    </tr>
-                {% endif %}
+            {% for entry in data %}
+            <tr>
+                <td>{{ entry.index }}</td>
+                <td>{{ entry.summary }}</td>
+                <td><a href="{{ entry.url }}" target="_blank">{{ entry.url }}</a></td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-
-<style>
-    /* Add some spacing between the search box and the table */
-    .search-container {
-        margin-bottom: 20px;
-    }
-
-    /* Add some styling for the table container if needed */
-    .table-container {
-        /* Add styling properties here */
-    }
-</style>
 
 {% endblock %}
