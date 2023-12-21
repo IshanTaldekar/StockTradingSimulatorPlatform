@@ -12,4 +12,4 @@ pip install -r requirements.txt -t ./package
 cd package || exit
 zip -r ../transactions-fetch-lambda-deployment-package.zip .
 cd ..
-zip transactions-fetch-lambda-deployment-package.zip transactions-fetch-lambda.py
+zip transactions-fetch-lambda-deployment-package.zip transactions_fetch_lambda.py

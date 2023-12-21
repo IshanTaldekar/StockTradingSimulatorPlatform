@@ -29,6 +29,7 @@ AWS_REGION = 'us-east-1'
 COGNITO_USER_POOL_ID = 'us-east-1_kbaObNghj'
 COGNITO_CLIENT_ID = '10pb7tp6nigkmu4vrodqjose2e'
 
+
 # AWS Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
 ##############################3
@@ -562,4 +563,4 @@ for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
 
 if __name__ == '__main__':
-    app.run(ssl_context=('cert.pem', 'key.pem'))
+    app.run()
