@@ -13,6 +13,7 @@
                     <th scope="col">Stock ID</th>
                     <th scope="col">Action</th>
                     <th scope="col">Quantity</th>
+                    <th scope="col">Transaction Amount</th>
                     <th scope="col">Timestamp</th>
                 </tr>
             </thead>
@@ -22,6 +23,7 @@
                       <td>{{ transaction['stock-id']['S'] }}</td>
                       <td>{{ transaction['action']['S'] }}</td>
                       <td>{{ transaction['quantity']['N'] }}</td>
+                      <td>{{ transaction['transaction-amount']['N'] }}</td>
                       <td>{{ transaction['timestamp']['S'] }}</td>
                   </tr>
               {% endfor %}
