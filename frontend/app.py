@@ -1,7 +1,7 @@
 import os
 import re
 from cs50 import SQL
-from flask import Flask, flash, jsonify, redirect, render_template, url_for,request, session
+from flask import Flask, flash, jsonify, redirect, render_template, url_for,request, session, send_from_directory
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
@@ -28,7 +28,6 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 AWS_REGION = 'us-east-1'
 COGNITO_USER_POOL_ID = 'us-east-1_kbaObNghj'
 COGNITO_CLIENT_ID = '10pb7tp6nigkmu4vrodqjose2e'
-
 
 # AWS Cognito client
 cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
@@ -79,19 +78,21 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
 
-# Make sure API key is set
-#if not os.environ.get("API_KEY"):
-#   raise RuntimeError("API_KEY not set")
+@app.route("/watch/", defaults={'path': ''})
+@app.route('/watch/<path:path>')
+def send_static(path):
+    if not path:
+        return send_from_directory('build', 'index.html')
+    return send_from_directory('build', path)
+
 
 @app.route("/")
 @login_required
 def index():
 
     # Assuming your API endpoint is hosted on AWS Lambda, you need to replace the URL with your actual API endpoint
-    api_url = "  https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
+    api_url = "https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"  
 
     # Retrieve username from the Flask session
     username = session.get('username')
@@ -111,9 +112,8 @@ def index():
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
-    api_url = " https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"
+    api_url = "https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/portfolio/fetch/{username}"
 
-    # Retrieve username from the Flask session
     # Retrieve username from the Flask session
     username = session.get('username')
     if request.method == 'POST':
@@ -168,7 +168,7 @@ def buy():
 @login_required
 def history():
 
-    api_url = "  https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/transactions/fetch/{username}"
+    api_url = "https://b2eerfdnf3.execute-api.us-east-1.amazonaws.com/prod/transactions/fetch/{username}"
 
     # Retrieve username from the Flask session
     username = session.get('username')
@@ -315,7 +315,7 @@ def changepaswd():
             return redirect("/changepaswd")
 
         if status:
-            rows = db.execute("UPDATE users SET hash = :hash WHERE id = :uid",uid=session["user_id"], hash=generate_password_hash(newpaswd))
+            #rows = db.execute("UPDATE users SET hash = :hash WHERE id = :uid",uid=session["user_id"], hash=generate_password_hash(newpaswd))
             #session["user_id"] = rows
             flash("Password changed successfully")
             return redirect("/")
@@ -441,11 +441,11 @@ def register():
             msg="Password confirmation did not match"
 
         # insert into database
-        uname=db.execute("SELECT username from users where username=:username",username=name)
-        print(uname, type(uname))
-        if(len(uname) != 0):
-            status=False
-            msg="Username already taken"
+        # uname=db.execute("SELECT username from users where username=:username",username=name)
+        # print(uname, type(uname))
+        # if(len(uname) != 0):
+        #    status=False
+        #    msg="Username already taken"
         # Ensure username exists and password is correct
         # Remember which user has logged in
         if status:
@@ -563,4 +563,4 @@ for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(ssl_context=('cert.pem', 'key.pem'))
