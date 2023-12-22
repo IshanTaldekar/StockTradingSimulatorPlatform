@@ -5,31 +5,32 @@
 {% endblock %}
 
 {% block main %}
-    <h1>User Portfolio</h1>
+    <h3>User Portfolio</h3>
 
     {% if api_data.message %}
-        <p>Username: {{ api_data.message.username.S }}</p>
         <p>Cash: {{ api_data.message.cash.N }}</p>
         <table class="table">
-          <thead class="thead-light">
-              <tr>
-                  <th scope="col">Stock ID</th>
-                  <th scope="col">Total Quantity</th>
-              </tr>
-          </thead>
-          <tbody>
-            {% for stock in api_data.message.stocks.L %}
-            <tr>
-                <td>{{ stock.M['stock-id'].S }}</td>
-                {% if stock.M.transactions.L %}
-                    <td>{{ stock.M.transactions.L[-1].M.quantity.N }}</td>
-                {% else %}
-                    <td>0</td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-          </tbody>
-      </table>
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">Stock ID</th>
+                    <th scope="col">Stock Short Name</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Stock Price</th>
+                    <th scope="col">Stock Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in api_data.message.portfolio %}
+                <tr>
+                    <td>{{ stock['stock-id'] }}</td>
+                    <td>{{ stock['stock-short-name'] }}</td>
+                    <td>{{ stock['quantity'] }}</td>
+                    <td>{{ stock['stock-price'] }}</td>
+                    <td>{{ stock['stock-value'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% else %}
         <p>No stocks available.</p>
     {% endif %}

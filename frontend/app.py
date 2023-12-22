@@ -185,7 +185,7 @@ def news():
 
     if request.method == "GET":
     # Make a request to your API for transaction history
-        api_url = "https://6vg1hb44u1.execute-api.us-east-1.amazonaws.com/dev/fetch"
+        api_url = "https://bi4lpr5vyb.execute-api.us-east-1.amazonaws.com/dev/fetch"
         response = requests.get(api_url)
         data = response.json()
         response_data=[]
@@ -193,13 +193,14 @@ def news():
             data_ = {}
             display_data = data_point.get('_source', {})
             data_["summary"] = display_data.get("summary", {})
+            data_["title"] = display_data.get("title", {})
             data_["url"] = display_data.get("url", {})
             data_["index"] = index + 1
             response_data.append(data_)
     
     elif request.method == "POST":
         keyword=request.form.get("query")
-        api_url2=f"https://6vg1hb44u1.execute-api.us-east-1.amazonaws.com/dev/search?keywords={keyword}"
+        api_url2=f"https://bi4lpr5vyb.execute-api.us-east-1.amazonaws.com/dev/search?keywords={keyword}"
         response = requests.get(api_url2)
         data = response.json()
         response_data=[]
@@ -207,6 +208,7 @@ def news():
             data_ = {}
             display_data = data_point.get('_source', {})
             data_["summary"] = display_data.get("summary", {})
+            data_["title"] = display_data.get("title", {})
             data_["url"] = display_data.get("url", {})
             data_["index"] = index + 1
             response_data.append(data_)
@@ -231,17 +233,6 @@ def login():
         # Ensure password was submitted
         elif not request.form.get("password"):
             return apology("must provide password", 403)
-
-        # # Query database for username
-        # rows = db.execute("SELECT * FROM users WHERE username = :username",
-        #                   username=request.form.get("username"))
-
-        # # Ensure username exists and password is correct
-        # if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-        #     return apology("invalid username and/or password", 403)
-
-        # Remember which user has logged in
-        # session["user_id"] = rows[0]["id"]
 
         try:
             response = cognito_client.initiate_auth(
@@ -315,11 +306,28 @@ def changepaswd():
             return redirect("/changepaswd")
 
         if status:
-            #rows = db.execute("UPDATE users SET hash = :hash WHERE id = :uid",uid=session["user_id"], hash=generate_password_hash(newpaswd))
-            #session["user_id"] = rows
-            flash("Password changed successfully")
-            return redirect("/")
-        # Redirect user to home page
+            try:
+                # Change password in Cognito
+                cognito_client.admin_initiate_auth(
+                    UserPoolId='COGNITO_USER_POOL_ID',
+                    ClientId='COGNITO_CLIENT_ID',
+                    AuthFlow='USER_PASSWORD_AUTH',
+                    Username=session['username'],  # Assuming the username is stored in the session
+                    UserAttributes=[
+                        {
+                            'Name': 'password',
+                            'Value': newpaswd,
+                        },
+                    ],
+                )
+
+                flash("Password changed successfully")
+                return redirect("/")
+
+            except Exception as e:
+                print(e)
+                flash("Failed to change password. Please try again.")
+                return redirect("/changepaswd")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:

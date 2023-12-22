@@ -17,16 +17,16 @@
         <thead class="thead-light">
             <tr>
                 <th scope="col">Sr.no</th>
-                <th scope="col">News</th>
-                <th scope="col">Link</th>
+                <th scope="col">Title</th>
+                <th scope="col">News</th>       
             </tr>
         </thead>
         <tbody>
             {% for entry in data %}
             <tr>
                 <td>{{ entry.index }}</td>
+                <td><a href="{{ entry.url }}" target="_blank">{{ entry.title }}</a></td>
                 <td>{{ entry.summary }}</td>
-                <td><a href="{{ entry.url }}" target="_blank">{{ entry.url }}</a></td>
             </tr>
             {% endfor %}
         </tbody>
