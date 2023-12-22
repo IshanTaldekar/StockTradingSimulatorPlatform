@@ -1,0 +1,62 @@
+.centered-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  input {
+    margin-bottom: 10px;
+    padding: 15px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 50px;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
+  
+  .subscription-box {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    max-width: 600px;
+  }
+  
+  .radio-buttons {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .radio-buttons label {
+    margin-left: -25px; 
+    margin-right: 25px; 
+  }
+  
+  .radio-buttons input {
+    margin-left: -100px; 
+    margin-right: -130px;
+  }
+  
+  .centered-box {
+    text-align: center;
+    margin: auto; /* Center horizontally */
+    max-width: 600px; /* Set a max-width for the box */
+  }
+  
