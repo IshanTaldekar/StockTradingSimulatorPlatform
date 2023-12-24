@@ -224,7 +224,7 @@ export class IdentityStack extends Stack {
             statements: [
                 new PolicyStatement({
                     actions: [
-                        's3:GetObject'
+                        's3:GetObject',
                     ],
                     effect: Effect.ALLOW,
                     resources: [
@@ -232,8 +232,26 @@ export class IdentityStack extends Stack {
                             {
                                 arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
                                 service: 's3',
-                                resource: 'cloud-computing-project-website-code-bucket',
+                                resource: 'play-stonks-website-code-bucket',
                                 resourceName: '*',
+                                region: '',
+                                account: ''
+                            },
+                            this
+                        )
+                    ]
+                }),
+                new PolicyStatement({
+                    actions: [
+                        's3:ListBucket'
+                    ],
+                    effect: Effect.ALLOW,
+                    resources: [
+                        Arn.format(
+                            {
+                                arnFormat: ArnFormat.NO_RESOURCE_NAME,
+                                service: 's3',
+                                resource: 'play-stonks-website-code-bucket',
                                 region: '',
                                 account: ''
                             },

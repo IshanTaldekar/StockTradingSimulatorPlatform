@@ -7,7 +7,7 @@ export class S3Stack extends Stack {
         super(scope, id, props);
 
         const websiteCodeBucket = new Bucket(this, 'WebsiteCodeS3Bucket', {
-            bucketName: 'cloud-computing-project-website-code-bucket'
+            bucketName: 'play-stonks-website-code-bucket'
         });
     }
 }

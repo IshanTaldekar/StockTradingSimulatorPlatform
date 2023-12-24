@@ -1,5 +1,5 @@
 import {Stack, StackProps} from "aws-cdk-lib";
-import {Vpc} from "aws-cdk-lib/aws-ec2";
+import {Port, SubnetType, Vpc} from "aws-cdk-lib/aws-ec2";
 import {Construct} from "constructs";
 import {AutoScalingGroup} from "aws-cdk-lib/aws-autoscaling";
 import {ApplicationLoadBalancer} from "aws-cdk-lib/aws-elasticloadbalancingv2";
@@ -15,8 +15,10 @@ export class LoadBalancerStack extends Stack {
 
         const loadBalancer = new ApplicationLoadBalancer(this, 'StackTradingPlatformLoadBalancer', {
             vpc: props.vpc,
+            vpcSubnets: {
+                subnetType: SubnetType.PUBLIC
+            },
             internetFacing: true,
-
         });
 
         const listener = loadBalancer.addListener('RequestsListener', {
@@ -24,11 +26,13 @@ export class LoadBalancerStack extends Stack {
         });
 
         listener.addTargets('RequestTargets', {
-            port: 80,
+            port: 443,
             targets: [
                 props.autoScalingGroup
             ]
         });
+
+        loadBalancer.connections.allowFromAnyIpv4(Port.tcp(80));
 
         props.autoScalingGroup.scaleOnRequestCount('ScalingPolicy', {
             targetRequestsPerMinute: 60

@@ -13,3 +13,4 @@ cd package || exit
 zip -r ../portfolio-fetch-lambda-deployment-package.zip .
 cd ..
 zip portfolio-fetch-lambda-deployment-package.zip portfolio_fetch_lambda.py
+zip portfolio-fetch-lambda-deployment-package.zip user_portfolios_dao.py

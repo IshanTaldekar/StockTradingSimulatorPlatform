@@ -34,9 +34,6 @@ export class StocksSimulatorStack extends Stack {
       vpc: vpcStack.vpc,
       ec2ServerRole: identityStack.ec2ServerRole
     });
-    autoScalingGroupStack.addDependency(vpcStack);
-    autoScalingGroupStack.addDependency(identityStack);
-    autoScalingGroupStack.addDependency(s3Stack);
 
     const loadBalancerStack = new LoadBalancerStack(this, 'LoadBalancerStack', {
       env: env,
@@ -53,12 +50,13 @@ export class StocksSimulatorStack extends Stack {
       env: env
     });
 
-    // const ec2Stack = new Ec2Stack(this, 'EC2Stack', {
-    //   env: env,
-    //   vpc: vpcStack.vpc,
-    //   ec2ServerRole: identityStack.ec2ServerRole
-    // });
-    // ec2Stack.addDependency(identityStack);
+    const ec2Stack = new Ec2Stack(this, 'EC2Stack', {
+      env: env,
+      vpc: vpcStack.vpc,
+      ec2ServerRole: identityStack.ec2ServerRole
+    });
+    ec2Stack.addDependency(identityStack);
+    ec2Stack.addDependency(vpcStack);
 
     const openSearchServiceStack = new OpenSearchServiceStack(this, 'OpenSearchServiceStack', {
       env: env

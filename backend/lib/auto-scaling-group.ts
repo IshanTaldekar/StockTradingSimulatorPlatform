@@ -5,7 +5,7 @@ import {
     InstanceType,
     LaunchTemplate,
     MachineImage,
-    OperatingSystemType, Peer, Port, SecurityGroup,
+    OperatingSystemType, Peer, Port, SecurityGroup, SubnetType,
     UserData,
     Vpc
 } from "aws-cdk-lib/aws-ec2";
@@ -27,16 +27,17 @@ export class AutoScalingGroupStack extends Stack {
         const startupSetupScript = readFileSync(
             'backend/assets/autoscaling-group-ec2-launch-config/ec2-launch-config.sh',
             'utf-8'
-        )
+        );
 
         const userData = UserData.forLinux();
         userData.addCommands(startupSetupScript);
 
-        const securityGroup = new SecurityGroup(this, 'Ec2SecurityGroup', {
+        const ec2ServerSecurityGroup = new SecurityGroup(this, 'AutoScalingGroupSecurityGroup', {
             vpc: props.vpc,
             allowAllOutbound: true
         });
-        securityGroup.addIngressRule(Peer.anyIpv4(), Port.allTraffic());
+        ec2ServerSecurityGroup.addIngressRule(Peer.anyIpv4(), Port.allTraffic());
+
 
         const launchTemplate = new LaunchTemplate(this, 'ServerLaunchTemplate', {
             userData: userData,
@@ -49,12 +50,15 @@ export class AutoScalingGroupStack extends Stack {
             ),
             role: props.ec2ServerRole,
             associatePublicIpAddress: true,
-            keyName: 'palrsa',
-            securityGroup: securityGroup
+            keyName: 'ec2SshKey',
+            securityGroup: ec2ServerSecurityGroup
         });
 
         this.autoScalingGroup = new AutoScalingGroup(this, 'StockTradingPlatformASG', {
             vpc: props.vpc,
+            vpcSubnets: {
+                subnetType: SubnetType.PUBLIC
+            },
             minCapacity: 2,
             maxCapacity: 5,
             launchTemplate: launchTemplate

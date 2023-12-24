@@ -1,6 +1,6 @@
 import {Stack, StackProps} from "aws-cdk-lib";
 import {Construct} from "constructs";
-import {IpAddresses, Vpc} from "aws-cdk-lib/aws-ec2";
+import {IpAddresses, Peer, Port, SecurityGroup, Vpc} from "aws-cdk-lib/aws-ec2";
 
 export class VpcStack extends Stack {
     public readonly vpc;

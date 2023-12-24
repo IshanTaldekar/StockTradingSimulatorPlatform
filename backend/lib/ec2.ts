@@ -5,7 +5,7 @@ import {
     Instance,
     InstanceType,
     MachineImage,
-    OperatingSystemType,
+    OperatingSystemType, Peer, Port, SecurityGroup,
     SubnetType,
     Vpc
 } from "aws-cdk-lib/aws-ec2";
@@ -13,12 +13,19 @@ import {Role} from "aws-cdk-lib/aws-iam";
 
 export interface Ec2StackProps extends StackProps {
     readonly vpc: Vpc,
-    readonly ec2ServerRole: Role
+    readonly ec2ServerRole: Role,
 }
 
 export class Ec2Stack extends Stack {
     constructor(scope: Construct, id: string, props: Ec2StackProps) {
         super(scope, id, props);
+
+        const ec2ServerSecurityGroup = new SecurityGroup(this, 'Ec2SecurityGroup', {
+            vpc: props.vpc,
+            allowAllOutbound: true
+        });
+        ec2ServerSecurityGroup.addIngressRule(Peer.anyIpv4(), Port.allTraffic());
+
 
         const instance = new Instance(this, 'frontend', {
             vpc: props.vpc,
@@ -30,9 +37,10 @@ export class Ec2Stack extends Stack {
                 }
             ),
             role: props.ec2ServerRole,
+            securityGroup: ec2ServerSecurityGroup,
             allowAllOutbound: true,
             associatePublicIpAddress: true,
-            keyName: 'palrsa',
+            keyName: 'ec2SshKey',
             vpcSubnets: {
                 subnetType: SubnetType.PUBLIC
             },

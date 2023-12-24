@@ -1,7 +1,7 @@
 from user_portfolios_dao import UserPortfoliosDAO
 from user_transactions_dao import UserTransactionsDAO
 
-import boto3
+import requests
 import json
 from datetime import datetime, timezone
 
@@ -21,8 +21,10 @@ def handler(event, context):
     utc_timestamp = datetime.now(timezone.utc)
     formatted_utc_timestamp = utc_timestamp.strftime('%m/%d/%Y %H:%M:%S')
 
-    # TODO: Add timestream integration to get latest stock price
-    stock_price = -1
+    res = requests.get(f'http://54.224.164.41:8000/Stock_{stock_id}').json()
+    stock_price = float(json.loads(res['data'])['p'])
+    short_name = json.loads(res['data'])['shortName']
+
     transaction_amount = int(quantity) * stock_price
 
     try:
@@ -34,15 +36,14 @@ def handler(event, context):
 
         transactions = []
 
-        for item in user_portfolio_response['Item']['stocks']['L']:
-            if item['M']['stock-id']['S'] == stock_id:
-                transactions = item['M']['transactions']['L']
-                break
-
         stocks_held = 0
 
-        for transaction in transactions:
-            stocks_held += int(transaction['M']['quantity']['N'])
+        for item in user_portfolio_response['Item']['stocks']['L']:
+            if item['M']['stock-id']['S'] == stock_id:
+                stocks_held = int(item['M']['held']['N'])
+                item['M']['held']['N'] = str(int(item['M']['held']['N']) - int(quantity))
+                transactions = item['M']['transactions']['L']
+                break
 
         if stocks_held < int(quantity):
             return {
@@ -78,7 +79,7 @@ def handler(event, context):
                 item['M']['transactions']['L'] = transactions
 
         item = user_portfolio_response['Item']
-        item['cash']['N'] = str(int(item['cash']['N']) + transaction_amount)
+        item['cash']['N'] = str(float(item['cash']['N']) + transaction_amount)
 
         user_portfolio_dao.update_user_portfolio(user_portfolio_response['Item'])
 

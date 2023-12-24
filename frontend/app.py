@@ -416,6 +416,7 @@ def register():
         mobile = request.form.get("mobile")
         hash=generate_password_hash(request.form.get("password"))
         status=True
+        msg = "Login failed"
         # Ensure username was submitted
         if not request.form.get("username"):
             status=False
@@ -441,10 +442,10 @@ def register():
 
         # Ensure password was submitted
         elif not request.form.get("password") or not request.form.get("password_confirm"):
-            status=False
+            status = False
             msg="Must provide Password"
 
-        elif  request.form.get("password")!=request.form.get("password_confirm"):
+        elif request.form.get("password")!=request.form.get("password_confirm"):
             status=False
             msg="Password confirmation did not match"
 
@@ -477,6 +478,7 @@ def register():
                 return redirect(url_for('confirm'))
 
             except Exception as e:
+                flash(e)
                 print(e)
         else:
             # Redirect user to home page

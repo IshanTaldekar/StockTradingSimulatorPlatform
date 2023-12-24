@@ -1,7 +1,7 @@
 from user_portfolios_dao import UserPortfoliosDAO
 from user_transactions_dao import UserTransactionsDAO
+import requests
 
-import boto3
 import json
 from datetime import datetime, timezone
 
@@ -21,8 +21,13 @@ def handler(event, context):
     utc_timestamp = datetime.now(timezone.utc)
     formatted_utc_timestamp = utc_timestamp.strftime('%m/%d/%Y %H:%M:%S')
 
-    # TODO: Add timestream integration to get latest stock price
-    stock_price = -1
+    res = requests.get(f'http://54.224.164.41:8000/Stock_{stock_id}').json()
+    stock_price = float(json.loads(res['data'])['p'])
+    short_name = json.loads(res['data'])['shortName']
+
+    print(f'stock price: {stock_price}')
+    print(f'stock name: {short_name}')
+
     transaction_amount = int(quantity) * stock_price
 
     try:
@@ -32,7 +37,7 @@ def handler(event, context):
             user_portfolio_dao.create_new_user_portfolio(username)
             user_portfolio_response = user_portfolio_dao.get_user_portfolio(username)
 
-        if transaction_amount > int(user_portfolio_response['Item']['cash']['N']):
+        if transaction_amount > float(user_portfolio_response['Item']['cash']['N']):
             return {
                 'statusCode': 500,
                 'headers': {
@@ -68,6 +73,7 @@ def handler(event, context):
 
         for item in user_portfolio_response['Item']['stocks']['L']:
             if item['M']['stock-id']['S'] == stock_id:
+                item['M']['held']['N'] = str(int(item['M']['held']['N']) + int(quantity))
                 item['M']['transactions']['L'].append(new_transaction)
                 transaction_inserted = True
                 break
@@ -79,6 +85,12 @@ def handler(event, context):
                         'stock-id': {
                             'S': stock_id
                         },
+                        'short-name': {
+                            'S': short_name
+                        },
+                        'held': {
+                            'N': quantity
+                        },
                         'transactions': {
                             'L': [new_transaction]
                         }
@@ -86,7 +98,7 @@ def handler(event, context):
                 }
             )
 
-        user_portfolio_response['Item']['cash']['N'] = str(int(user_portfolio_response['Item']['cash']['N']) -
+        user_portfolio_response['Item']['cash']['N'] = str(float(user_portfolio_response['Item']['cash']['N']) -
                                                            transaction_amount)
         user_portfolio_dao.update_user_portfolio(user_portfolio_response['Item'])
 
